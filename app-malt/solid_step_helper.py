@@ -4,10 +4,15 @@ from networkx.readwrite import json_graph
 from prototxt_parser.prototxt import parse
 from collections import Counter
 import re
+import os
+
+_file_dir = os.path.dirname(os.path.abspath(__file__))
+GRAPH_TOPOLOGY_DIR = os.path.join(_file_dir, 'data')
 
 
 def getGraphData():
-    input_string = open("data/malt-graph.textproto.txt").read()
+    data_path = os.path.join(GRAPH_TOPOLOGY_DIR, 'malt-graph.textproto.txt')
+    input_string = open(data_path).read()
     parsed_dict = parse(input_string)
 
     # Load MALT data

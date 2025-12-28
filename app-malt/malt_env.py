@@ -12,13 +12,11 @@ from solid_step_helper import getGraphData, clean_up_llm_output_func, check_list
     solid_step_add_node_to_graph, solid_step_counting_query, solid_step_remove_node_from_graph, \
     solid_step_list_child_nodes, solid_step_update_node_value, solid_step_rank_child_nodes, validate_llm_output
 import networkx as nx
-import jsonlines
 import json
 import re
 import time
 import sys
 import numpy as np
-from llm_model import AzureGPT4Agent, GoogleGeminiAgent, QwenModel, QwenModel_finetuned, ReAct_Agent
 from error_check import SafetyChecker
 
 
@@ -28,39 +26,41 @@ OUTPUT_JSONL_FILE = 'gpt4.jsonl'
 
 
 class BenchmarkEvaluator:
-    def __init__(self, graph_data, llm_agent_type, prompt_type, model_path=None):
+    def __init__(self, graph_data):
         self.graph_data = graph_data
-        # Call the output code from LLM agents file
-        if llm_agent_type == "AzureGPT4Agent":
-            self.llm_agent = AzureGPT4Agent(prompt_type)
-        elif llm_agent_type == "GoogleGeminiAgent":
-            self.llm_agent = GoogleGeminiAgent(prompt_type)
-        elif llm_agent_type == "Qwen2.5-72B-Instruct":
-            self.llm_agent = QwenModel(prompt_type)
-        elif llm_agent_type == "QwenModel_finetuned":
-            self.llm_agent = QwenModel_finetuned(prompt_type, model_path=model_path)
-        elif llm_agent_type == "ReAct_Agent":
-            self.llm_agent = ReAct_Agent(prompt_type='base')
 
-    def userQuery(self, current_query, golden_answer):
-        # for each prompt in the prompt_list, append it as the value of {'query': prompt}
+    def run_agent_output(self, current_query, golden_answer, llm_answer=None):
+        """Evaluate a single query against the graph.
+
+        If `llm_answer` is provided, it will be used directly (for A2A workflows).
+        Otherwise, a locally instantiated agent (if available) will be called.
+        """
         print("Query: ", current_query)
 
         G = self.graph_data
         
-        start_time = time.time()
-
-        llm_answer = self.llm_agent.call_agent(current_query)
-        print("LLM answer: ", llm_answer)
-
-        try:
-            exec(llm_answer)
-            ret = eval("process_graph(copy.deepcopy(G))")
-        except Exception:
-            ret = {'type': "error", 'data': traceback.format_exc()}
+        # Shared namespace for exec/eval with all required dependencies
+        exec_namespace = {
+            'G': G, 'copy': copy, 'nx': nx, 'json': json,
+            # Include all solid_step helper functions
+            'solid_step_add_node_to_graph': solid_step_add_node_to_graph,
+            'solid_step_counting_query': solid_step_counting_query,
+            'solid_step_remove_node_from_graph': solid_step_remove_node_from_graph,
+            'solid_step_list_child_nodes': solid_step_list_child_nodes,
+            'solid_step_update_node_value': solid_step_update_node_value,
+            'solid_step_rank_child_nodes': solid_step_rank_child_nodes,
+        }
         
-        query_run_latency = time.time() - start_time
-
+        if llm_answer is None:
+            # Provide a useful error structure that's consistent with existing handling
+            ret = {'type': 'error', 'data': 'No LLM response provided and no local LLM agent available.'}
+        else:
+            try:
+                exec(llm_answer, exec_namespace)
+                ret = eval("process_graph(copy.deepcopy(G))", exec_namespace)
+            except Exception:
+                ret = {'type': "error", 'data': traceback.format_exc()}
+        
         # if the type of ret is string, turn it into a json object
         if isinstance(ret, str):
             try:
@@ -92,8 +92,10 @@ class BenchmarkEvaluator:
         goldenAnswerCode = golden_answer
 
         # ground truth answer should already be checked to ensure it can run successfully
-        exec(goldenAnswerCode)
-        ground_truth_ret = eval("ground_truth_process_graph(copy.deepcopy(G))")
+        # Use a fresh copy of the namespace to avoid pollution from LLM code
+        gt_namespace = dict(exec_namespace)
+        exec(goldenAnswerCode, gt_namespace)
+        ground_truth_ret = eval("ground_truth_process_graph(copy.deepcopy(G))", gt_namespace)
         # if the type of ground_truth_ret is string, turn it into a json object
         if isinstance(ground_truth_ret, str):
             ground_truth_ret = json.loads(ground_truth_ret)
@@ -117,14 +119,15 @@ class BenchmarkEvaluator:
 
         print("=========Current query process is done!=========")
 
-        return ret, ground_truth_ret, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, query_run_latency, ret_graph_copy
+        return ret, ground_truth_ret, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, ret_graph_copy
 
-    def ground_truth_check(self, requestData, task_label, ret, ground_truth_ret, ret_graph_copy, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, query_run_latency, output_path):
+    def ground_truth_check(self, requestData, task_label, ret, ground_truth_ret, ret_graph_copy, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, query_run_latency):
         # Helper function to log results and avoid code duplication
         def log_result(is_correct):
             log_func = self.result_log_correct if is_correct else self.result_log_wrong
-            log_func(requestData, task_label, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, 
-                    query_run_latency, ground_truth_ret, ret, output_path)
+            res = log_func(requestData, task_label, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, 
+                    query_run_latency, ground_truth_ret, ret)
+            return res
 
         # Convert numeric data to strings for text type
         if ground_truth_ret['type'] == 'text':
@@ -145,17 +148,17 @@ class BenchmarkEvaluator:
         }
 
         # Get the appropriate comparison strategy and execute it
-        compare_func = comparison_strategies.get(ground_truth_ret['type'])
-        if compare_func:
-            # Sometimes LLM output doesn't fully match the expected data type, so we need this.
-            try:
-                is_correct = compare_func(ground_truth_ret['data'], ret['data'])
-                log_result(is_correct)
-            except:
-                print("Error during comparison: ", traceback.format_exc())
-                log_result(False)
+        # Sometimes LLM output doesn't fully match the expected data type, so we need this.
+        try:
+            compare_func = comparison_strategies[ground_truth_ret['type']]
+            is_correct = compare_func(ground_truth_ret['data'], ret['data'])
+            res = log_result(is_correct)
+        except:
+            print("Error during comparison: ", traceback.format_exc())
+            res = log_result(False)
+        return res
 
-    def result_log_wrong(self, current_query, task_label, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, query_run_latency, ground_truth_ret, ret, output_path):
+    def result_log_wrong(self, current_query, task_label, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, query_run_latency, ground_truth_ret, ret):
         result_object = {
             "Query": current_query,
             "Label": task_label,
@@ -191,14 +194,10 @@ class BenchmarkEvaluator:
             result_object["Verifier-Error"] = verifier_error
         if not gt_verifier_results:
             result_object["GT-Verifier-Error"] = gt_verifier_error
-
-        # Save result_object into a JsonLine file
-        with jsonlines.open(output_path, mode='a') as writer:
-            writer.write(result_object)
         
-        return None
+        return result_object
 
-    def result_log_correct(self, current_query, task_label, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, query_run_latency, ground_truth_ret, ret, output_path):
+    def result_log_correct(self, current_query, task_label, verifier_results, verifier_error, gt_verifier_results, gt_verifier_error, query_run_latency, ground_truth_ret, ret):
         result_object = {
             "Query": current_query,
             "Label": task_label,
@@ -219,10 +218,6 @@ class BenchmarkEvaluator:
         if not gt_verifier_results:
             result_object["GT-Verifier-Error"] = gt_verifier_error
         
-        # Save result_object into a JsonLine file
-        with jsonlines.open(output_path, mode='a') as writer:
-            writer.write(result_object)
-        
-        return None
+        return result_object
 
 

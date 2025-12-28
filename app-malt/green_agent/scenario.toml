@@ -1,0 +1,15 @@
+[green_agent]
+endpoint = "http://127.0.0.1:9999"
+
+[[participants]]
+role = "network_operator"
+agentbeats_id = "some_agentbeats_id"
+endpoint = "http://127.0.0.1:8000"
+
+[config]
+prompt_type = "zeroshot_base" 
+num_queries = 1 
+complexity_level = ["level1", "level2"]
+output_dir = "output" 
+output_file = "query_output.jsonl" 
+dynamic_benchmark_path = "test_data.jsonl" 

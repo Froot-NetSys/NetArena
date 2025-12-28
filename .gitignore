@@ -1,13 +1,13 @@
 .idea
-*/.env
+.env
 *.DS_Store
-*/logs/*
-*/__pycache__/
-*/.pytest_cache/*
-*/.vscode/*
-*/.mypy_cache/*
-*/.coverage
-*/.coverage.*
+logs/
+__pycache__/
+.pytest_cache/
+.vscode/
+.mypy_cache/
+.coverage
+.coverage.*
 
 # Config files with credentials (use *.template.toml as base)
 app-malt/config.toml

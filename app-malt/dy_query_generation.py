@@ -3,13 +3,22 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 import json
-from solid_step_helper import get_node_value_ranges, getGraphData, \
-solid_step_add_node_to_graph, solid_step_counting_query, solid_step_remove_node_from_graph, solid_step_list_child_nodes, solid_step_update_node_value, solid_step_rank_child_nodes
+import os
+from solid_step_helper import get_node_value_ranges, getGraphData, GRAPH_TOPOLOGY_DIR
+from enum import Enum
+
+
+class ComplexityLevel(Enum):
+    LEVEL1 = 'level1'
+    LEVEL2 = 'level2'
+    LEVEL3 = 'level3'
+
 
 class QueryGenerator:
     def __init__(self,):
         _, self.malt_real_graph = getGraphData()
-        node_value_ranges_path = 'data/node_value_ranges.json'
+        data_path = os.path.join(GRAPH_TOPOLOGY_DIR, 'node_value_ranges.json')
+        node_value_ranges_path = data_path
         self.node_value_ranges = get_node_value_ranges(self.malt_real_graph, node_value_ranges_path)
         self.queries = []
 

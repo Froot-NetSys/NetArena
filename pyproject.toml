@@ -1,0 +1,30 @@
+[project]
+name = "netpress"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "a2a-sdk[http-server]>=0.3.22",
+    "attrs>=25.4.0",
+    "cattrs>=25.3.0",
+    "httpx>=0.28.1",
+    "jsonlines>=4.0.0",
+    "litellm>=1.80.11",
+    "loguru>=0.7.3",
+    "matplotlib>=3.10.8",
+    "networkx>=3.6.1",
+    "numpy>=2.4.0",
+    "pandas>=2.3.3",
+    "prototxt-parser>=1.0",
+    "scipy>=1.16.3",
+    "uvicorn[standard]>=0.40.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.18,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "netarena"
+module-root = "src"
