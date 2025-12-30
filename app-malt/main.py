@@ -111,9 +111,9 @@ async def evaluate_on_queries(config: MaltConfig):
     # TODO: Separate http clients (and context manager) for each agent to enable different HTTP configs. For now, just remember to clean up shared client.
     async with httpx.AsyncClient() as httpx_client:
         # Establish connections to the agents.
-        clients = [AgentClient(agent_client_config) for agent_client_config in config.agent_client_configs]
+        clients = [AgentClient(agent_client_config, http_client=httpx_client) for agent_client_config in config.agent_client_configs]
         agents: list[AgentClient] = []
-        for client in asyncio.as_completed([c.start(httpx_client) for c in clients]):
+        for client in asyncio.as_completed([c.start() for c in clients]):
             try:
                 agent = await client
                 agents.append(agent)

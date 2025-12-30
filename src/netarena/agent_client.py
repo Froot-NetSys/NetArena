@@ -73,13 +73,12 @@ class AgentClient:
     An async client that handles making text completion requests to an (LLM-powered) A2A-compatible agent.
     """
 
-    def __init__(self, config: AgentClientConfig):
+    def __init__(self, config: AgentClientConfig, http_client: httpx.AsyncClient | None = None):
         self.config = config
-
-    async def start(self, http_client: httpx.AsyncClient | None = None):
-        logger.info(f'Starting agent client for agent "{self.config.name}" connected to {self.config.base_url}')
-        # Initialize the A2AClient with the provided configuration
         self.http_client = httpx.AsyncClient() if not http_client else http_client
+
+    async def start(self) -> "AgentClient":
+        logger.info(f'Starting agent client for agent "{self.config.name}" connected to {self.config.base_url}')
 
         client_config = ClientConfig(
             httpx_client=self.http_client,

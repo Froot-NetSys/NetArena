@@ -52,13 +52,22 @@ Question: {input}
 
 Answer:
 ```python
-${{Code that will answer the user question or request}}
+${answer}
 ```
 """
 
 FEWSHOT_PROMPT = f"""Here are a few examples of questions and their corresponding answers:"""
 
-PROMPT_SUFFIX = f"""Begin! Remember to ensure that you generate valid Python code in the following format: {QA_TEMPLATE}"""
+PROMPT_SUFFIX = """
+Begin! Remember to ensure that you generate valid Python code in the following format: 
+
+Question: {input}
+
+Answer:
+```python
+${{Code that will answer the user question or request}}
+```
+"""
 
 EXAMPLE_LIST = [
             {
