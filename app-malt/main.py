@@ -42,7 +42,7 @@ class MaltConfig:
 # Define a configuration for the benchmark
 def parse_args():
     parser = argparse.ArgumentParser(description="Benchmark Configuration")
-    parser.add_argument('--prompt_type', type=PromptType, default='base', help='Choose the prompt type', choices=[pt for pt in PromptType])
+    parser.add_argument('--prompt_type', type=PromptType, default=PromptType.ZEROSHOT_BASE, help='Choose the prompt type', choices=[pt for pt in PromptType])
     parser.add_argument('--num_queries', type=int, default=10, help='Number of queries to generate for each type')
     parser.add_argument('--complexity_level', nargs='+', default=['level1', 'level2'], help='Complexity level of queries to generate')
     parser.add_argument('--output_dir', type=str, default='logs/llm_agents', help='Directory to save output JSONL file')
