@@ -43,7 +43,7 @@ Answer: ```{answer}```
 
 FEWSHOT_PROMPT = f"""Here are a few examples of questions and their corresponding answers:"""
 
-PROMPT_SUFFIX = """Here is the current connectivity status:\n{input}"""
+PROMPT_SUFFIX = """You may begin! Here is the current connectivity status from previous commands:\n{input}"""
 
 EXAMPLE_LIST = [
     {
@@ -126,6 +126,7 @@ DEFAULT_CONTEXT_LENGTH = 127000
 
 
 def create_query_prompt(query_text: str, prompt_type: PromptType) -> str:
+    query_text = query_text if query_text else "<NO PREVIOUS OUTPUT>"
     subsituted_query_text = PROMPT_SUFFIX.format(input=query_text)   
     if prompt_type == PromptType.ZEROSHOT_COT:
         prompt = '\n'.join([BASE_PROMPT, COT_PROMPT, subsituted_query_text])
@@ -170,3 +171,22 @@ def get_context_from_file(file_path: str, context_length: int | None = DEFAULT_C
     if context_length:
         content = content[-context_length:]
     return content
+
+
+def check_disallowed_commands(command: str) -> bool:
+    """Check if the command contains any disallowed operations."""
+    disallowed_keywords = [
+        "kubectl exec",
+        "kubectl edit",
+        "kubectl delete",
+        "kubectl create",
+        "kubectl apply",
+        "bash",
+        "sh",
+        "<namespace>",
+        "sudo"
+    ]
+    for keyword in disallowed_keywords:
+        if keyword in command:
+            return True
+    return False

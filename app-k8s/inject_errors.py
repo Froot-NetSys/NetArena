@@ -4,6 +4,27 @@ import yaml
 import itertools
 import json
 from typing import List, Dict
+from loguru import logger
+
+from run_workflow import K8sConfig
+from deploy_policies import POLICY_NAMES
+
+
+def fetch_error_config(config: K8sConfig) -> List[Dict]:
+    """Fetch error configuration from a JSON file."""
+    if config.config_gen:
+        logger.info("Force generating new error configuration...")
+        config_data = generate_config(config.benchmark_path, POLICY_NAMES, config.num_queries)
+    else:
+        if os.path.exists(config.benchmark_path):
+            logger.info(f"Loading error configuration from {config.benchmark_path}...")
+            error_config_path = config.benchmark_path
+            with open(error_config_path, "r") as f:
+                config_data = json.load(f)['details']
+        else:
+            logger.info("Config file not found, generating new error configuration...")
+            config_data = generate_config(config.benchmark_path, POLICY_NAMES, config.num_queries)
+    return config_data
 
 def generate_config(config_path, policy_names, num_queries):
     # Define error types and combinations

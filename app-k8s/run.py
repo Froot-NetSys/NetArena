@@ -15,7 +15,7 @@ import os
 import sys
 from cattrs import structure
 from loguru import logger
-from run_workflow import K8sConfig, run_config_error
+from run_workflow import K8sConfig, run_evaluation
 
 try:
     import tomllib
@@ -105,7 +105,7 @@ Examples:
     # Run the benchmark
     print("Starting K8s benchmark evaluation...\n")
     
-    asyncio.run(run_config_error(run_args))
+    asyncio.run(run_evaluation(run_args))
     
     print("\nBenchmark evaluation complete!")
 

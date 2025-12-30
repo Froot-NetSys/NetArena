@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-def file_write(llm_command, output, mismatch_summary, json_file_path, txt_file_path):
+def file_write(llm_command: str, output: str, mismatch_summary: str, json_file_path: str, txt_file_path: str) -> list[dict[str, str]]:
     # Append to JSON file
     with open(json_file_path, 'r+') as json_file:
         try:
@@ -25,10 +25,11 @@ def file_write(llm_command, output, mismatch_summary, json_file_path, txt_file_p
     
     # Append to TXT file
     with open(txt_file_path, 'a') as txt_file:
-        txt_file.write(f"LLM Command: {llm_command}\n")
-        txt_file.write(f"Output: {output}\n")
-        txt_file.write(f"Mismatch Summary: {mismatch_summary}\n")
+        txt_file.write(f"LLM Command: ```{llm_command}```\n")
+        txt_file.write(f"Output: ```{output}```\n")
+        txt_file.write(f"Mismatch Summary: ```{mismatch_summary}```\n")
         txt_file.write("\n")
+    return data
 
 def summary_tests(folder_path):
     basic_errors = ["remove_ingress", "add_ingress", "change_port", "change_protocol", "add_egress"]
