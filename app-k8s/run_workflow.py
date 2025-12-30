@@ -18,7 +18,27 @@ from correct_policy import copy_yaml_to_new_folder
 from deploy_policies import deploy_policies, POLICY_NAMES, POD_NAMES
 from netarena.agent_client import AgentClient, AgentClientConfig, PromptType
 from text_utils import create_query_prompt, get_context_from_file, get_context_from_file, extract_command, check_disallowed_commands
-from config import K8sConfig
+
+
+@dataclass
+class K8sConfig:
+    """
+    Structured container for the app settings.
+    """
+    prompt_type: PromptType = PromptType.ZEROSHOT_BASE
+    num_queries: int = 10
+    output_dir: str = 'output'
+    microservice_dir: str = 'microservices-demo'
+    output_file: str = 'eval_results.jsonl'
+    benchmark_path: str = 'error_config.jsonl'
+    config_gen: bool = False
+    max_iterations: int = 10
+    agent_client_configs: list[AgentClientConfig] = field(default_factory=list)
+
+    def __post_init__(self):
+        # TODO: Limit to only one agent for now (maybe use K8s namespaces to allow parallel assessments on a single cluster).
+        if len(self.agent_client_configs) > 1:
+            raise ValueError(f'Must have exactly one agent client config, got {len(self.agent_client_configs)}')
 
 
 # Deploy a Kubernetes cluster using Skaffold
@@ -55,7 +75,7 @@ async def run_config_error(args: K8sConfig, result_dir: str | None = None):
         os.makedirs(result_dir, exist_ok=True)
 
     # Generate the error configuration if needed.
-    error_config = fetch_error_config(args)
+    error_config = fetch_error_config(args.benchmark_path, args.num_queries, args.config_gen)
 
     total_error_num = len(error_config)
     logger.info(f"Total number of errors: {total_error_num}")
