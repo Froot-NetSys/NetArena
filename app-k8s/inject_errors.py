@@ -6,7 +6,7 @@ import json
 from typing import List, Dict
 from loguru import logger
 
-from run_workflow import K8sConfig
+from config import K8sConfig
 from deploy_policies import POLICY_NAMES
 
 
