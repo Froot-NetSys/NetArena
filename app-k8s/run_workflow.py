@@ -15,7 +15,6 @@ from file_util import file_write, summary_tests, plot_metrics, plot_summary_resu
 from inject_errors import inject_config_errors_into_policies, generate_config
 from correctness_check import correctness_check, create_debug_container, EXPECTED_RESULTS
 from correct_policy import copy_yaml_to_new_folder
-from llm_agent import LLMAgent
 from deploy_policies import deploy_policies
 from netarena.agent_client import AgentClient, AgentClientConfig, PromptType
 from text_utils import create_query_prompt, get_context_from_file, get_context_from_file, extract_command
@@ -41,47 +40,30 @@ class K8sConfig:
         if len(self.agent_client_configs) != 1:
             raise ValueError(f'Must have exactly one agent client config, got {len(self.agent_client_configs)}')
 
-
-# Define a configuration for the benchmark
-def parse_args():
-    parser = argparse.ArgumentParser(description="Benchmark Configuration")
-    parser.add_argument('--llm_agent_type', type=str, default="Qwen/Qwen2.5-72B-Instruct", help='Choose the LLM agent')#choices=["Qwen/Qwen2.5-72B-Instruct", "GPT-4o", "ReAct_Agent"]
-    parser.add_argument('--num_queries', type=int, default=1, help='Number of queries to generate for each type')
-    parser.add_argument('--root_dir', type=str, default="/home/ubuntu/NetPress_benchmark/app-k8s/results", help='Directory to save output files.')
-    parser.add_argument('--microservice_dir', type=str, default="/home/ubuntu/microservices-demo", help='Directory to google microservice demo')
-    parser.add_argument('--max_iteration', type=int, default=10, help='Choose maximum trials for a query')
-    parser.add_argument('--config_gen', type=int, default=1, help='Choose whether to generate new config')
-    parser.add_argument('--benchmark_path', type=str, default="/home/ubuntu/NetPress_benchmark/app-k8s/results/error_config.json",
-                         help='Where to save the generated benchmark (config), or where to find it if config_gen is 0.')
-    parser.add_argument('--num_gpus', type=int, default=1, help='Number of GPUs to use for tensor parallelism (VLLM). Only applies to locally run models.')
-    parser.add_argument('--prompt_type', type=str, default="base", choices=["few_shot_basic", "base", "cot"], help='Choose the prompt type')
-    parser.add_argument('--agent_test', type=int, default=0, choices=[0, 1], help='Choose whether to run the agent test')
-    return parser.parse_args()
-
 # Deploy a Kubernetes cluster using Skaffold
-def deploy_k8s_cluster(skaffold_config_path: str):
+def deploy_k8s_cluster(microservice_dir: str):
     """
     Deletes the existing kind cluster, creates a new one, and deploys an application using skaffold.
-    :param skaffold_config_path: Path to the skaffold configuration directory.
+    :param microservice_dir: Path to the microservice directory.
     """
     try:
-        print("Deleting existing kind cluster...")
-        subprocess.run(["kind", "delete", "cluster"], check=True)
+        # TODO: Wait for a proper deletion before creating a new deployment.
+        logger.info("Tearing down previous deployments...")
+        subprocess.run(["kubectl", "delete", "-f", "./release/kubernetes-manifests.yaml"], cwd=microservice_dir, check=True)
+
+        time.sleep(5)  # Wait for resources to be deleted
         
-        print("Creating a new kind cluster...")
-        subprocess.run(["kind", "create", "cluster"], check=True)
+        logger.info("Deploying application...")
+        subprocess.run(["kubectl", "apply", "-f", "./release/kubernetes-manifests.yaml"], cwd=microservice_dir, check=True)
+
+        time.sleep(5)  # Wait for resources to be created.
         
-        print("Deploying application using skaffold...")
-        subprocess.run(["skaffold", "run"], cwd=skaffold_config_path, check=True)
-        
-        print("Deployment completed successfully.")
+        logger.info("Deployment completed successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"Error occurred: {e}")
+        logger.error(f"Error occurred: {e}")
 
 # Run the configuration error test
-async def run_config_error(args):
-    args = structure(vars(args), K8sConfig)
-
+async def run_config_error(args: K8sConfig):
     starttime = datetime.now()
 
     policy_names = [
@@ -101,6 +83,8 @@ async def run_config_error(args):
     result_dir = os.path.join(args.output_dir, f'{llm_config.name}_{args.prompt_type}', timestamp)
 
     os.makedirs(result_dir, exist_ok=True)
+
+    # Generate the error configuration if needed.
     if args.config_gen:
         error_config = generate_config(args.benchmark_path, policy_names, args.num_queries)
 
@@ -156,7 +140,7 @@ async def run_config_error(args):
 
             json_file_path = os.path.join(result_dir, f"{error_detail_str}_result_{i}.json")
             with open(json_file_path, 'w') as json_file:
-                print(f"Created JSON file: {json_file_path}")
+                logger.info(f"Created JSON file: {json_file_path}")
 
             log_path = os.path.join(result_dir, f"{error_detail_str}_result_{i}.log")
             with open(log_path, 'w'):
@@ -188,6 +172,7 @@ async def run_config_error(args):
                     connectivity_status = get_context_from_file(log_path)
                     prompt = create_query_prompt(connectivity_status, args.prompt_type)
                     llm_output = await llm.handle_query(prompt)
+                    logger.debug(f"LLM output: {llm_output}")
                     if llm_output is None:
                         logger.error(f"Error while generating LLM command. Retrying...")
                         await asyncio.sleep(3)
@@ -218,13 +203,13 @@ async def run_config_error(args):
                     logger.error(f"Command timed out after 60 seconds")
                     output = "Command timed out"
                 except subprocess.CalledProcessError as e:
-                    print(f"Command failed:\n{e.stderr}")
+                    logger.error(f"Command failed:\n{e.stderr}")
                     output = e.stderr
                 endtime = datetime.now()
                 logger.info(f"LLM command execution time: {endtime - starttime}")
 
                 starttime = datetime.now()
-                all_match, mismatch_summary = await correctness_check(EXPECTED_RESULTS, debug_container_mapping)
+                all_match, mismatch_summary = await correctness_check(debug_container_mapping, EXPECTED_RESULTS)
                 endtime = datetime.now()
                 logger.info(f"Correctness check time: {endtime - starttime}")
 
@@ -289,11 +274,3 @@ async def run_agent_test(args):
     plot_summary_results(args.root_dir, 50)
     plot_summary_results(args.root_dir, 150)
 
-
-# Main entry point
-if __name__ == "__main__":
-    args = parse_args()
-    if args.agent_test == 1:
-        asyncio.run(run_agent_test(args))
-    else:
-        asyncio.run(run_config_error(args))
