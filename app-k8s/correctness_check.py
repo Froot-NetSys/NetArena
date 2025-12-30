@@ -3,6 +3,124 @@ import subprocess
 import json
 import time
 
+
+# Expected connectivity results for correctness checking
+EXPECTED_RESULTS = {
+    "frontend": {
+        "adservice:9555": True,
+        "cartservice:7070": True,
+        "checkoutservice:5050": True,
+        "currencyservice:7000": True,
+        "productcatalogservice:3550": True,
+        "recommendationservice:8080": True,
+        "shippingservice:50051": True,
+        "emailservice:5000": False,
+        "paymentservice:50051": False,
+        "redis-cart:6379": False
+    },
+    "adservice": {
+        "cartservice:7070": False,
+        "checkoutservice:5050": False,
+        "currencyservice:7000": False,
+        "productcatalogservice:3550": False,
+        "recommendationservice:8080": False,
+        "shippingservice:50051": False,
+        "emailservice:5000": False,
+        "paymentservice:50051": False,
+        "redis-cart:6379": False
+    },
+    "cartservice": {
+        "adservice:9555": False,
+        "checkoutservice:5050": False,
+        "currencyservice:7000": False,
+        "productcatalogservice:3550": False,
+        "recommendationservice:8080": False,
+        "shippingservice:50051": False,
+        "emailservice:5000": False,
+        "paymentservice:50051": False,
+        "redis-cart:6379": True
+    },
+    "checkoutservice": {
+        "adservice:9555": False,
+        "cartservice:7070": True,
+        "currencyservice:7000": True,
+        "productcatalogservice:3550": True,
+        "recommendationservice:8080": False,
+        "shippingservice:50051": True,
+        "emailservice:5000": True,
+        "paymentservice:50051": True,
+        "redis-cart:6379": False
+    },
+    "productcatalogservice": {
+        "adservice:9555": False,
+        "cartservice:7070": False,
+        "checkoutservice:5050": False,
+        "currencyservice:7000": False,
+        "recommendationservice:8080": False,
+        "shippingservice:50051": False,
+        "emailservice:5000": False,
+        "paymentservice:50051": False,
+        "redis-cart:6379": False
+    },
+    "recommendationservice": {
+        "adservice:9555": False,
+        "cartservice:7070": False,
+        "checkoutservice:5050": False,
+        "currencyservice:7000": False,
+        "productcatalogservice:3550": True,
+        "shippingservice:50051": False,
+        "emailservice:5000": False,
+        "paymentservice:50051": False,
+        "redis-cart:6379": False
+    },
+    "shippingservice": {
+        "adservice:9555": False,
+        "cartservice:7070": False,
+        "checkoutservice:5050": False,
+        "currencyservice:7000": False,
+        "productcatalogservice:3550": False,
+        "recommendationservice:8080": False,
+        "emailservice:5000": False,
+        "paymentservice:50051": False,
+        "redis-cart:6379": False
+    },
+    "emailservice": {
+        "adservice:9555": False,
+        "cartservice:7070": False,
+        "checkoutservice:5050": False,
+        "currencyservice:7000": False,
+        "productcatalogservice:3550": False,
+        "recommendationservice:8080": False,
+        "shippingservice:50051": False,
+        "paymentservice:50051": False,
+        "redis-cart:6379": False
+    },
+    "redis-cart": {
+        "adservice:9555": False,
+        "cartservice:7070": False,
+        "checkoutservice:5050": False,
+        "currencyservice:7000": False,
+        "productcatalogservice:3550": False,
+        "recommendationservice:8080": False,
+        "shippingservice:50051": False,
+        "emailservice:5000": False,
+        "paymentservice:50051": False
+    },
+    "loadgenerator": {
+        "adservice:9555": False,
+        "cartservice:7070": False,
+        "checkoutservice:5050": False,
+        "currencyservice:7000": False,
+        "productcatalogservice:3550": False,
+        "recommendationservice:8080": False,
+        "shippingservice:50051": False,
+        "emailservice:5000": False,
+        "paymentservice:50051": False,
+        "redis-cart:6379": False
+    }
+}
+
+
 async def find_pod_by_prefix(prefix):
     """Find a pod whose name starts with the specified prefix."""
     try:
@@ -152,7 +270,7 @@ async def process_pod(pod_prefix, targets, debug_container_mapping):
 
     return pod_all_match, "\n".join(pod_mismatch_messages)
 
-async def correctness_check(expected_results, debug_container_mapping):
+async def correctness_check(debug_container_mapping, expected_results=EXPECTED_RESULTS):
     """Check connectivity for all pods in parallel."""
     tasks = [
         process_pod(pod_prefix, targets, debug_container_mapping)
