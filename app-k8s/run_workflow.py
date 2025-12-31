@@ -20,6 +20,9 @@ from netarena.agent_client import AgentClient, AgentClientConfig, PromptType
 from text_utils import create_query_prompt, get_context_from_file, get_context_from_file, extract_command, check_disallowed_commands
 
 
+MAX_RETRIES = 5
+
+
 @dataclass
 class K8sConfig:
     """
@@ -142,11 +145,11 @@ async def run_error_config(args: K8sConfig, result_dir: str | None = None):
             prev_mismatch_count = float('inf')
             for k in range(args.max_iterations):
                 starttime = datetime.now()
-                logger.info(f"Running LLM iteration {k+1}...")
+                logger.info(f"Running LLM iteration {k + 1}...")
 
                 # Use a while True loop to continuously attempt to get the LLM command
                 attempt = 0
-                while True:
+                while attempt < MAX_RETRIES:
                     attempt += 1
                     logger.info(f"Attempt {attempt}: Calling LLM...")
                     # Read the connectivity status from the debug container logs.
@@ -155,13 +158,19 @@ async def run_error_config(args: K8sConfig, result_dir: str | None = None):
                     llm_output = await llm.handle_query(prompt)
                     logger.debug(f"Raw LLM output: {llm_output}")
                     if llm_output is None:
-                        logger.error(f"Error while generating LLM command. Retrying...")
+                        logger.warning(f"Error while generating LLM command. Retrying...")
                         await asyncio.sleep(3)
                         continue
                     else:
                         llm_command = extract_command(llm_output)
                         logger.info(f"Generated LLM command: {llm_command}")
                         break
+                else:
+                    logger.error(f"Failed to get a valid LLM command after {MAX_RETRIES} attempts (this may indicate an issue with the LLM endpoint). Skipping this iteration.")
+                    llm_command = ""
+                    output = "LLM command generation failed."
+                    await asyncio.sleep(MAX_RETRIES * 3)  # Backoff before next iteration
+                    continue 
 
                 endtime = datetime.now()
                 logger.info(f"LLM generation time: {endtime - starttime}")

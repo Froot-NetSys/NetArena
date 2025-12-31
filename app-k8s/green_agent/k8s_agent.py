@@ -116,7 +116,7 @@ class K8sEvalAgent:
 
 class GreenExecutor(AgentExecutor):
 
-    def __init__(self, green_agent: MaltEvalAgent):
+    def __init__(self, green_agent: K8sEvalAgent):
         self.agent = green_agent
 
     async def execute(
