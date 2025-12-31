@@ -39,21 +39,6 @@ class MaltConfig:
             raise ValueError(f'Bad agent client configuration. Different agents cannot have the same name.')
 
 
-# Define a configuration for the benchmark
-def parse_args():
-    parser = argparse.ArgumentParser(description="Benchmark Configuration")
-    parser.add_argument('--prompt_type', type=PromptType, default=PromptType.ZEROSHOT_BASE, help='Choose the prompt type', choices=[pt for pt in PromptType])
-    parser.add_argument('--num_queries', type=int, default=10, help='Number of queries to generate for each type')
-    parser.add_argument('--complexity_level', nargs='+', default=['level1', 'level2'], help='Complexity level of queries to generate')
-    parser.add_argument('--output_dir', type=str, default='logs/llm_agents', help='Directory to save output JSONL file')
-    parser.add_argument('--output_file', type=str, default='gpt4o.jsonl', help='Name of the output JSONL file')
-    parser.add_argument('--dynamic_benchmark_path', type=str, default='data/benchmark_malt.jsonl', help='Path to save dynamic dataset')
-    parser.add_argument('--regenerate_query', action='store_true', help='Whether to regenerate benchmark queries or load existing ones')
-    parser.add_argument('--start_index', type=int, default=0, help='Start index of the queries to run (zero indexed).')
-    parser.add_argument('--end_index', type=int, default=None, help='End index of the queries to run (zero indexed).')
-    return parser.parse_args()
-
-
 async def evaluate_on_queries(config: MaltConfig):
     """
     Handles querying each agent on the generated benchmark and evaluating the LLM generated code.
@@ -138,9 +123,9 @@ async def evaluate_on_queries(config: MaltConfig):
 # Example usage:
 # python main.py --llm_agent_type AzureGPT4Agent --num_queries 2 --complexity_level level1 --output_dir logs/llm_agents --output_file gpt4o.jsonl --dynamic_benchmark_path data/benchmark_malt.jsonl
 
-async def main(args):
+async def main(args: MaltConfig):
     # Validate command line args.
-    benchmark_config = cattrs.structure(vars(args), MaltConfig)
+    benchmark_config = args
 
     # create the output directory if it does not exist
     if not os.path.exists(args.output_dir):
