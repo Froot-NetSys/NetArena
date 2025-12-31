@@ -44,27 +44,23 @@ class K8sConfig:
 # Deploy a Kubernetes cluster using Skaffold
 def deploy_k8s_cluster(microservice_dir: str):
     """
-    Deletes the existing kind cluster, creates a new one, and deploys an application using skaffold.
+    Deletes the existing K8s deployment and creates a new one.
     :param microservice_dir: Path to the microservice directory.
     """
     try:
-        # TODO: Wait for a proper deletion before creating a new deployment.
+        # TODO: Namespace support for multiple parallel assessments?
         logger.info("Tearing down previous deployments...")
         subprocess.run(["kubectl", "delete", "-f", "./release/kubernetes-manifests.yaml"], cwd=microservice_dir, check=True)
 
-        time.sleep(5)  # Wait for resources to be deleted
-        
         logger.info("Deploying application...")
         subprocess.run(["kubectl", "apply", "-f", "./release/kubernetes-manifests.yaml"], cwd=microservice_dir, check=True)
-
-        time.sleep(5)  # Wait for resources to be created.
         
         logger.info("Deployment completed successfully.")
     except subprocess.CalledProcessError as e:
         logger.error(f"Error occurred: {e}")
 
 # Run the configuration error test
-async def run_config_error(args: K8sConfig, result_dir: str | None = None):
+async def run_error_config(args: K8sConfig, result_dir: str | None = None):
     starttime = datetime.now()
 
     # Create the result directory. Timestamp directory already included when running the agent test.
@@ -218,66 +214,15 @@ async def run_evaluation(args: K8sConfig):
     llm_config_dict = args.agent_client_configs[0]
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     result_dir = os.path.join(args.output_dir, f'{llm_config_dict.name}_{args.prompt_type}', timestamp)
+    os.makedirs(result_dir, exist_ok=True)
 
     deploy_k8s_cluster(args.microservice_dir)
 
     # TODO: Ideally, this should only produce result artifacts (and not write anything to disk). Ignore the results, just run the evaluation.
-    async for _ in run_config_error(args, result_dir=result_dir):
+    async for _ in run_error_config(args, result_dir=result_dir):
         pass
 
     summary_tests(result_dir)
     plot_metrics(result_dir)
 
-# Run the agent test
-async def run_agent_test(args):
-    args.root_dir = os.path.join(args.root_dir, "result", args.llm_agent_type, "agent_test", datetime.now().strftime("%Y%m%d_%H%M%S"))
-    for i in range(5):
-        if i == 0:
-            deploy_k8s_cluster(args.microservice_dir)
-            args.prompt_type = "cot"
-            args.config_gen = 1
-            await run_config_error(args)
-        elif i == 1:
-            start_time = datetime.now()
-            deploy_k8s_cluster(args.microservice_dir)
-            args.config_gen = 0
-            args.prompt_type = "few_shot_basic"
-            await run_config_error(args)
-            end_time = datetime.now()
-            print(f"Time taken for prompt_type {args.prompt_type}: {end_time - start_time}")
-        elif i == 2:
-            start_time = datetime.now()
-            deploy_k8s_cluster(args.microservice_dir)
-            args.config_gen = 0
-            args.prompt_type = "few_shot_basic"
-            args.llm_agent_type = "GPT-4o"
-            await run_config_error(args)
-            end_time = datetime.now()
-            print(f"Time taken for prompt_type {args.prompt_type}: {end_time - start_time}")
-        elif i == 3:
-            start_time = datetime.now()
-            deploy_k8s_cluster(args.microservice_dir)
-            args.config_gen = 0
-            args.prompt_type = "few_shot_basic"
-            await run_config_error(args)
-            end_time = datetime.now()
-            print(f"Time taken for prompt_type {args.prompt_type}: {end_time - start_time}")
-        elif i == 4:
-            start_time = datetime.now()
-            deploy_k8s_cluster(args.microservice_dir)
-            args.config_gen = 0
-            args.prompt_type = "base"
-            args.llm_agent_type = "ReAct_Agent"
-            await run_config_error(args)
-            end_time = datetime.now()
-            print(f"Time taken for prompt_type {args.prompt_type}: {end_time - start_time}")
-
-    policies_dir = os.path.join(args.root_dir, "policies")
-    if os.path.exists(policies_dir):
-        shutil.rmtree(policies_dir)
-
-
-    plot_summary_results(args.root_dir, 10)
-    plot_summary_results(args.root_dir, 50)
-    plot_summary_results(args.root_dir, 150)
 

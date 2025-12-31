@@ -31,7 +31,7 @@ from a2a.server.events import EventQueue
 from a2a.utils import new_agent_text_message, new_task
 from a2a.utils.errors import ServerError
 
-from run_workflow import K8sConfig, run_config_error
+from run_workflow import K8sConfig, run_error_config
 from netarena.agent_client import AgentClientConfig, PromptType
 
 
@@ -40,7 +40,7 @@ class EvalRequest(BaseModel):
     config: dict[str, Any]
 
 
-class MaltEvalAgent:
+class K8sEvalAgent:
 
     async def run_eval(self, request: EvalRequest, updater: TaskUpdater) -> None:
         config: K8sConfig = structure(request.config, K8sConfig)
@@ -51,7 +51,7 @@ class MaltEvalAgent:
         config.agent_client_configs = [agent_config]
 
         # TODO: Support multiple agent evals at once?
-        query_eval_results = run_config_error(config)
+        query_eval_results = run_error_config(config)
 
         # Each agent (name) mapped to a unique artifact containing all its evaluation results.
         artifact_id = None
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     )
 
     request_handler = DefaultRequestHandler(
-        agent_executor=GreenExecutor(MaltEvalAgent()),
+        agent_executor=GreenExecutor(K8sEvalAgent()),
         task_store=InMemoryTaskStore(),
     )
 
