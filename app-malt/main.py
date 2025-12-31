@@ -12,7 +12,7 @@ from loguru import logger
 from dataclasses import dataclass, field
 
 from netarena.agent_client import AgentClientConfig, AgentClient, PromptType
-from dy_query_generation import QueryGenerator, ComplexityLevel
+from dy_query_generation import QueryGenerator, ComplexityLevel, fetch_benchmark_queries
 from malt_env import BenchmarkEvaluator
 from text_utils import create_query_prompt, extract_code_output
 
@@ -27,7 +27,7 @@ class MaltConfig:
     num_queries: int = 10
     output_dir: str = 'output'
     output_file: str = 'eval_results.jsonl'
-    dynamic_benchmark_path: str = 'malt_benchmark.jsonl'
+    benchmark_path: str = 'malt_benchmark.jsonl'
     regenerate_query: bool = False
     start_index: int = 0
     end_index: int | None = None
@@ -54,42 +54,6 @@ def parse_args():
     return parser.parse_args()
 
 
-def fetch_benchmark_queries(app_config: MaltConfig, query_generator: QueryGenerator | None = None) -> list[dict]:
-    if query_generator is None:
-        query_generator = QueryGenerator()
-
-    benchmark_path = app_config.dynamic_benchmark_path
-    if app_config.regenerate_query:
-        logger.info("Generating new queries due to regenerate_query=True")
-        query_generator.generate_queries(num_each_type=app_config.num_queries, complexity_level=app_config.complexity_level)
-        query_generator.save_queries_to_file(benchmark_path)
-    else:
-        if not os.path.exists(benchmark_path):
-            logger.info(f"Benchmark file {benchmark_path} does not exist. Generating new queries...")
-            query_generator.generate_queries(num_each_type=app_config.num_queries, complexity_level=app_config.complexity_level)
-            query_generator.save_queries_to_file(benchmark_path)
-        else:
-            logger.info(f"Loading existing benchmark from {benchmark_path}")
-            query_generator.load_queries_from_file(benchmark_path)
-
-    # the format is {"messages": [{"question": "XXX."}, {"answer": "YYY"}]}
-    benchmark_data = []
-    with jsonlines.open(benchmark_path) as reader:
-        for obj in reader:
-            benchmark_data.append(obj['messages'])
-    
-    # Skip to start_index if specified
-    start_idx = max(app_config.start_index, 0)
-    end_idx = len(benchmark_data) if not isinstance(app_config.end_index, int) else min(app_config.end_index, len(benchmark_data))
-    if 0 < start_idx or end_idx < len(benchmark_data):
-        logger.info(f"Starting from query index {start_idx} (skipping {start_idx} queries) and ending at {end_idx} (processing {end_idx - start_idx} queries).")
-        if start_idx >= end_idx:
-            logger.warning(f"Warning: start_index {start_idx} is greater than or equal to end index ({len(benchmark_data)})")
-        benchmark_data = benchmark_data[start_idx:end_idx]
-
-    return benchmark_data
-
-
 async def evaluate_on_queries(config: MaltConfig):
     """
     Handles querying each agent on the generated benchmark and evaluating the LLM generated code.
@@ -101,7 +65,14 @@ async def evaluate_on_queries(config: MaltConfig):
     evaluator = BenchmarkEvaluator(graph_data=query_generator.malt_real_graph)
 
     # the format is {"messages": [{"question": "XXX."}, {"answer": "YYY"}]}
-    benchmark_data = fetch_benchmark_queries(config, query_generator=query_generator)
+    benchmark_data = fetch_benchmark_queries(
+        benchmark_path=config.benchmark_path, 
+        num_queries=config.num_queries, 
+        complexity_level=config.complexity_level, 
+        regenerate_query=config.regenerate_query, 
+        start_index=config.start_index, 
+        end_index=config.end_index
+    )
 
     # Helper function to associate awaitable with a key.
     async def key_value(key, value):

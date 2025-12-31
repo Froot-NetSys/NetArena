@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import random
 import matplotlib.pyplot as plt
+import jsonlines
+from loguru import logger
 import json
 import os
 from solid_step_helper import get_node_value_ranges, getGraphData, GRAPH_TOPOLOGY_DIR
@@ -12,6 +14,47 @@ class ComplexityLevel(Enum):
     LEVEL1 = 'level1'
     LEVEL2 = 'level2'
     LEVEL3 = 'level3'
+
+
+def fetch_benchmark_queries(
+    benchmark_path: str, 
+    num_queries: int, 
+    complexity_level: list[ComplexityLevel], 
+    regenerate_query: bool = False,
+    start_index: int = 0,
+    end_index: int | None = None
+) -> list[dict]:
+    query_generator = QueryGenerator()
+
+    if regenerate_query:
+        logger.info("Generating new queries due to regenerate_query=True")
+        query_generator.generate_queries(num_each_type=num_queries, complexity_level=complexity_level)
+        query_generator.save_queries_to_file(benchmark_path)
+    else:
+        if not os.path.exists(benchmark_path):
+            logger.info(f"Benchmark file {benchmark_path} does not exist. Generating new queries...")
+            query_generator.generate_queries(num_each_type=num_queries, complexity_level=complexity_level)
+            query_generator.save_queries_to_file(benchmark_path)
+        else:
+            logger.info(f"Loading existing benchmark from {benchmark_path}")
+            query_generator.load_queries_from_file(benchmark_path)
+
+    # the format is {"messages": [{"question": "XXX."}, {"answer": "YYY"}]}
+    benchmark_data = []
+    with jsonlines.open(benchmark_path) as reader:
+        for obj in reader:
+            benchmark_data.append(obj['messages'])
+    
+    # Skip to start_index if specified
+    start_idx = max(start_index, 0)
+    end_idx = len(benchmark_data) if not isinstance(end_index, int) else min(end_index, len(benchmark_data))
+    if 0 < start_idx or end_idx < len(benchmark_data):
+        logger.info(f"Starting from query index {start_idx} (skipping {start_idx} queries) and ending at {end_idx} (processing {end_idx - start_idx} queries).")
+        if start_idx >= end_idx:
+            logger.warning(f"Warning: start_index {start_idx} is greater than or equal to end index ({len(benchmark_data)})")
+        benchmark_data = benchmark_data[start_idx:end_idx]
+
+    return benchmark_data
 
 
 class QueryGenerator:
