@@ -5,7 +5,6 @@ import asyncio
 import httpx
 import time
 import matplotlib.pyplot as plt
-import argparse
 from scipy import stats
 import cattrs
 from loguru import logger
@@ -263,9 +262,3 @@ async def main(args: MaltConfig):
     plt.tight_layout()
     plt.savefig(os.path.join(figs_dir, f'safety_pass_rate_{args.llm_model_type}_{timestamp}.png'), dpi=300)
     # plt.show()
-
-
-# run the main function
-if __name__ == "__main__":
-    args = parse_args()
-    asyncio.run(main(args))
