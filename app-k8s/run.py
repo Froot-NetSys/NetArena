@@ -15,8 +15,7 @@ import os
 import sys
 from cattrs import structure
 from loguru import logger
-from run_workflow import run_evaluation
-from config import K8sConfig
+from run_workflow import run_evaluation, K8sConfig
 
 try:
     import tomllib

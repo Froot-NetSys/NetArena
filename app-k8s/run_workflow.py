@@ -34,7 +34,7 @@ class K8sConfig:
     microservice_dir: str = 'microservices-demo'
     output_file: str = 'eval_results.jsonl'
     benchmark_path: str = 'error_config.jsonl'
-    config_gen: bool = False
+    regenerate_config: bool = False
     max_iterations: int = 10
     agent_client_configs: list[AgentClientConfig] = field(default_factory=list)
 
@@ -74,7 +74,7 @@ async def run_error_config(args: K8sConfig, result_dir: str | None = None):
         os.makedirs(result_dir, exist_ok=True)
 
     # Generate the error configuration if needed.
-    error_config = fetch_error_config(args.benchmark_path, args.num_queries, args.config_gen)
+    error_config = fetch_error_config(args.benchmark_path, args.num_queries, args.regenerate_config)
 
     total_error_num = len(error_config)
     logger.info(f"Total number of errors: {total_error_num}")
