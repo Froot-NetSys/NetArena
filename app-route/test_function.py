@@ -60,10 +60,7 @@ async def evaluate_routing_queries(args: AppRouteConfig, result_dir: str | None 
 
     # Generate or load the error configuration file
     # If benchmark_path is relative, make it relative to root_dir
-    if not os.path.isabs(args.benchmark_path):
-        file_path = os.path.join(args.output_dir, args.benchmark_path)
-    else:
-        file_path = args.benchmark_path
+    file_path = args.benchmark_path
     
     # Generate config if requested OR if the file doesn't exist
     if args.regenerate_benchmark or not os.path.exists(file_path):
@@ -71,7 +68,7 @@ async def evaluate_routing_queries(args: AppRouteConfig, result_dir: str | None 
                        num_switches=args.num_switches, num_hosts_per_subnet=args.num_hosts_per_subnet)
         logger.info(f"Process {unique_id}: Generated error configuration file: {file_path}")
     logger.info(f"Process {unique_id}: Running benchmark with prompt type {args.prompt_type}")
-    logger.info(file_path)
+    logger.info(f"Process {unique_id}: Using error configuration file: {file_path}")
     # Load the error configuration
     with open(file_path, 'r') as f:
         config = json.load(f)
@@ -248,6 +245,7 @@ async def evaluate_routing_queries(args: AppRouteConfig, result_dir: str | None 
                 'success': success,
                 'safe': is_safe,
                 'iterations': iter + 1,
+                'log_content': get_context_from_file(log_path, context_length=None)
             }
             yield eval_result
 
