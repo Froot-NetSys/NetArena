@@ -13,13 +13,16 @@ import argparse
 import os
 import sys
 from datetime import datetime
+import asyncio
+from loguru import logger
+from cattrs import structure
 
 try:
     import tomllib
 except ImportError:
     import tomli as tomllib
 
-from test_function import static_benchmark_run_modify, run_benchmark_parallel
+from test_function import run_benchmark, AppRouteConfig
 
 
 def load_config(config_path: str) -> dict:
@@ -38,55 +41,6 @@ def load_config(config_path: str) -> dict:
         config = tomllib.load(f)
     
     return config
-
-
-def setup_environment(config: dict) -> None:
-    """Set environment variables from config if not already set."""
-    # Azure OpenAI settings
-    azure = config.get("model", {}).get("azure", {})
-    if azure.get("endpoint") and "AZURE_OPENAI_ENDPOINT" not in os.environ:
-        os.environ["AZURE_OPENAI_ENDPOINT"] = azure["endpoint"]
-    if azure.get("deployment_name") and "AZURE_OPENAI_DEPLOYMENT_NAME" not in os.environ:
-        os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = azure["deployment_name"]
-    if azure.get("api_version") and "AZURE_OPENAI_API_VERSION" not in os.environ:
-        os.environ["AZURE_OPENAI_API_VERSION"] = azure["api_version"]
-    if azure.get("api_key") and "AZURE_OPENAI_API_KEY" not in os.environ:
-        os.environ["AZURE_OPENAI_API_KEY"] = azure["api_key"]
-    
-    # Hugging Face token
-    hf = config.get("model", {}).get("huggingface", {})
-    if hf.get("token") and "HUGGINGFACE_TOKEN" not in os.environ:
-        os.environ["HUGGINGFACE_TOKEN"] = hf["token"]
-
-
-class ConfigArgs:
-    """Convert TOML config to argparse-like namespace for compatibility with main.py."""
-    
-    def __init__(self, config: dict):
-        model = config.get("model", {})
-        benchmark = config.get("benchmark", {})
-        topology = config.get("topology", {})
-        output = config.get("output", {})
-        
-        # Model settings
-        self.llm_agent_type = model.get("agent_type", "GPT-Agent")
-        self.prompt_type = model.get("prompt_type", "base")
-        self.vllm = model.get("vllm", 1)
-        self.num_gpus = model.get("num_gpus", 1)
-        
-        # Benchmark settings
-        self.num_queries = benchmark.get("num_queries", 10)
-        self.max_iteration = benchmark.get("max_iteration", 10)
-        self.static_benchmark_generation = 1 if benchmark.get("regenerate", False) else 0
-        self.benchmark_path = benchmark.get("benchmark_path", "error_config.json")
-        self.parallel = 1 if benchmark.get("parallel", False) else 0
-        
-        # Topology settings
-        self.num_switches = topology.get("num_switches", 2)
-        self.num_hosts_per_subnet = topology.get("num_hosts_per_subnet", 1)
-        
-        # Output settings
-        self.root_dir = output.get("output_dir", "results")
 
 
 def print_config_summary(config: dict) -> None:
@@ -109,7 +63,7 @@ def print_config_summary(config: dict) -> None:
     print("=" * 60 + "\n")
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         description="Run route benchmark evaluation",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -143,20 +97,14 @@ Examples:
         print("Configuration loaded successfully. Use without --show-config to run.")
         return
     
-    # Setup environment variables
-    setup_environment(config)
-    
     # Convert to args namespace for main.py compatibility
-    run_args = ConfigArgs(config)
+    run_args = structure(config, AppRouteConfig)
     
     # Run the benchmark
     print("Starting route benchmark evaluation...\n")
     start_time = datetime.now()
     
-    if run_args.parallel == 1:
-        run_benchmark_parallel(run_args)
-    else:
-        static_benchmark_run_modify(run_args)
+    await run_benchmark(run_args)
     
     end_time = datetime.now()
     duration = end_time - start_time
@@ -164,5 +112,4 @@ Examples:
 
 
 if __name__ == "__main__":
-    main()
-
+    asyncio.run(main())

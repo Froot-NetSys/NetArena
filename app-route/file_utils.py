@@ -52,6 +52,37 @@ def initialize_json_file(json_path):
         with open(json_path, 'w') as json_file:
             json.dump([], json_file, indent=4)
 
+def write_query_result(json_path, result_data):
+    """
+    Write the result data to a JSON file. If the file exists, append the data;
+    otherwise, create a new file.
+
+    Args:
+        json_path (str): The path to the JSON file.
+        result_data (dict): The result data to write.
+    """
+    if os.path.exists(json_path):
+        with open(json_path, 'r+') as json_file:
+            data = json.load(json_file)
+            data.append(result_data)
+            json_file.seek(0)
+            json.dump(data, json_file, indent=4)
+    else:
+        with open(json_path, 'w') as json_file:
+            json.dump([result_data], json_file, indent=4)
+
+def write_log_content(log_path, content):
+    """
+    Write content to a log file. If the file exists, append the content;
+    otherwise, create a new file.
+
+    Args:
+        log_path (str): The path to the log file.
+        content (str): The content to write to the log file.
+    """
+    with open(log_path, 'a') as log_file:
+        log_file.write(content + '\n')
+
 def static_summarize_results(json_folder, output_file):
     """Summarize results from multiple JSON files in a folder and write to a new JSON file."""
     total_success = 0

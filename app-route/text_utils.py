@@ -134,6 +134,8 @@ EXAMPLE_LIST = [
 
 ]
 
+DEFAULT_CONTEXT_LENGTH = 127000
+
 
 def create_query_prompt(query_text: str, prompt_type: PromptType) -> str:
     subsituted_query_text = PROMPT_SUFFIX.format(input=query_text)   
@@ -158,3 +160,19 @@ def extract_value(text, keyword):
     if match:
         return match.group(1)
     return None
+
+
+def get_context_from_file(file_path: str, context_length: int | None = DEFAULT_CONTEXT_LENGTH) -> str:
+    """
+    Read the content of a text file and return it as a string. If context_length is provided, only the last 'context_length' characters are returned.
+
+    Args:
+        file_path (str): The path to the text file containing the text.
+    Returns:
+        str: The content of the text file as a string.
+    """
+    with open(file_path, 'r') as file:
+        content = file.read()
+    if context_length:
+        content = content[-context_length:]
+    return content
