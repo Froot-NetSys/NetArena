@@ -5,14 +5,13 @@ import asyncio
 import httpx
 import time
 import matplotlib.pyplot as plt
-import argparse
 from scipy import stats
 import cattrs
 from loguru import logger
 from dataclasses import dataclass, field
 
 from netarena.agent_client import AgentClientConfig, AgentClient, PromptType
-from dy_query_generation import QueryGenerator, ComplexityLevel
+from dy_query_generation import QueryGenerator, ComplexityLevel, fetch_benchmark_queries
 from malt_env import BenchmarkEvaluator
 from text_utils import create_query_prompt, extract_code_output
 
@@ -27,7 +26,7 @@ class MaltConfig:
     num_queries: int = 10
     output_dir: str = 'output'
     output_file: str = 'eval_results.jsonl'
-    dynamic_benchmark_path: str = 'malt_benchmark.jsonl'
+    benchmark_path: str = 'malt_benchmark.jsonl'
     regenerate_query: bool = False
     start_index: int = 0
     end_index: int | None = None
@@ -37,57 +36,6 @@ class MaltConfig:
         names = [config.name for config in self.agent_client_configs]
         if len(names) != len(set(names)):
             raise ValueError(f'Bad agent client configuration. Different agents cannot have the same name.')
-
-
-# Define a configuration for the benchmark
-def parse_args():
-    parser = argparse.ArgumentParser(description="Benchmark Configuration")
-    parser.add_argument('--prompt_type', type=PromptType, default='base', help='Choose the prompt type', choices=[pt for pt in PromptType])
-    parser.add_argument('--num_queries', type=int, default=10, help='Number of queries to generate for each type')
-    parser.add_argument('--complexity_level', nargs='+', default=['level1', 'level2'], help='Complexity level of queries to generate')
-    parser.add_argument('--output_dir', type=str, default='logs/llm_agents', help='Directory to save output JSONL file')
-    parser.add_argument('--output_file', type=str, default='gpt4o.jsonl', help='Name of the output JSONL file')
-    parser.add_argument('--dynamic_benchmark_path', type=str, default='data/benchmark_malt.jsonl', help='Path to save dynamic dataset')
-    parser.add_argument('--regenerate_query', action='store_true', help='Whether to regenerate benchmark queries or load existing ones')
-    parser.add_argument('--start_index', type=int, default=0, help='Start index of the queries to run (zero indexed).')
-    parser.add_argument('--end_index', type=int, default=None, help='End index of the queries to run (zero indexed).')
-    return parser.parse_args()
-
-
-def fetch_benchmark_queries(app_config: MaltConfig, query_generator: QueryGenerator | None = None) -> list[dict]:
-    if query_generator is None:
-        query_generator = QueryGenerator()
-
-    benchmark_path = app_config.dynamic_benchmark_path
-    if app_config.regenerate_query:
-        logger.info("Generating new queries due to regenerate_query=True")
-        query_generator.generate_queries(num_each_type=app_config.num_queries, complexity_level=app_config.complexity_level)
-        query_generator.save_queries_to_file(benchmark_path)
-    else:
-        if not os.path.exists(benchmark_path):
-            logger.info(f"Benchmark file {benchmark_path} does not exist. Generating new queries...")
-            query_generator.generate_queries(num_each_type=app_config.num_queries, complexity_level=app_config.complexity_level)
-            query_generator.save_queries_to_file(benchmark_path)
-        else:
-            logger.info(f"Loading existing benchmark from {benchmark_path}")
-            query_generator.load_queries_from_file(benchmark_path)
-
-    # the format is {"messages": [{"question": "XXX."}, {"answer": "YYY"}]}
-    benchmark_data = []
-    with jsonlines.open(benchmark_path) as reader:
-        for obj in reader:
-            benchmark_data.append(obj['messages'])
-    
-    # Skip to start_index if specified
-    start_idx = max(app_config.start_index, 0)
-    end_idx = len(benchmark_data) if not isinstance(app_config.end_index, int) else min(app_config.end_index, len(benchmark_data))
-    if 0 < start_idx or end_idx < len(benchmark_data):
-        logger.info(f"Starting from query index {start_idx} (skipping {start_idx} queries) and ending at {end_idx} (processing {end_idx - start_idx} queries).")
-        if start_idx >= end_idx:
-            logger.warning(f"Warning: start_index {start_idx} is greater than or equal to end index ({len(benchmark_data)})")
-        benchmark_data = benchmark_data[start_idx:end_idx]
-
-    return benchmark_data
 
 
 async def evaluate_on_queries(config: MaltConfig):
@@ -101,7 +49,14 @@ async def evaluate_on_queries(config: MaltConfig):
     evaluator = BenchmarkEvaluator(graph_data=query_generator.malt_real_graph)
 
     # the format is {"messages": [{"question": "XXX."}, {"answer": "YYY"}]}
-    benchmark_data = fetch_benchmark_queries(config, query_generator=query_generator)
+    benchmark_data = fetch_benchmark_queries(
+        benchmark_path=config.benchmark_path, 
+        num_queries=config.num_queries, 
+        complexity_level=config.complexity_level, 
+        regenerate_query=config.regenerate_query, 
+        start_index=config.start_index, 
+        end_index=config.end_index
+    )
 
     # Helper function to associate awaitable with a key.
     async def key_value(key, value):
@@ -111,9 +66,9 @@ async def evaluate_on_queries(config: MaltConfig):
     # TODO: Separate http clients (and context manager) for each agent to enable different HTTP configs. For now, just remember to clean up shared client.
     async with httpx.AsyncClient() as httpx_client:
         # Establish connections to the agents.
-        clients = [AgentClient(agent_client_config) for agent_client_config in config.agent_client_configs]
+        clients = [AgentClient(agent_client_config, http_client=httpx_client) for agent_client_config in config.agent_client_configs]
         agents: list[AgentClient] = []
-        for client in asyncio.as_completed([c.start(httpx_client) for c in clients]):
+        for client in asyncio.as_completed([c.start() for c in clients]):
             try:
                 agent = await client
                 agents.append(agent)
@@ -167,9 +122,9 @@ async def evaluate_on_queries(config: MaltConfig):
 # Example usage:
 # python main.py --llm_agent_type AzureGPT4Agent --num_queries 2 --complexity_level level1 --output_dir logs/llm_agents --output_file gpt4o.jsonl --dynamic_benchmark_path data/benchmark_malt.jsonl
 
-async def main(args):
+async def main(args: MaltConfig):
     # Validate command line args.
-    benchmark_config = cattrs.structure(vars(args), MaltConfig)
+    benchmark_config = args
 
     # create the output directory if it does not exist
     if not os.path.exists(args.output_dir):
@@ -307,9 +262,3 @@ async def main(args):
     plt.tight_layout()
     plt.savefig(os.path.join(figs_dir, f'safety_pass_rate_{args.llm_model_type}_{timestamp}.png'), dpi=300)
     # plt.show()
-
-
-# run the main function
-if __name__ == "__main__":
-    args = parse_args()
-    asyncio.run(main(args))

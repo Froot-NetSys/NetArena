@@ -4,6 +4,26 @@ import yaml
 import itertools
 import json
 from typing import List, Dict
+from loguru import logger
+
+from deploy_policies import POLICY_NAMES
+
+
+def fetch_error_config(benchmark_path: str, num_queries: int, generate_config_flag: bool) -> List[Dict]:
+    """Fetch error configuration from a JSON file."""
+    if generate_config_flag:
+        logger.info("Force generating new error configuration...")
+        config_data = generate_config(benchmark_path, POLICY_NAMES, num_queries)
+    else:
+        if os.path.exists(benchmark_path):
+            logger.info(f"Loading error configuration from {benchmark_path}...")
+            error_config_path = benchmark_path
+            with open(error_config_path, "r") as f:
+                config_data = json.load(f)['details']
+        else:
+            logger.info("Config file not found, generating new error configuration...")
+            config_data = generate_config(benchmark_path, POLICY_NAMES, num_queries)
+    return config_data
 
 def generate_config(config_path, policy_names, num_queries):
     # Define error types and combinations

@@ -13,6 +13,9 @@ import argparse
 import asyncio
 import os
 import sys
+from cattrs import structure
+from loguru import logger
+from run_workflow import run_evaluation, K8sConfig
 
 try:
     import tomllib
@@ -36,56 +39,6 @@ def load_config(config_path: str) -> dict:
         config = tomllib.load(f)
     
     return config
-
-
-def setup_environment(config: dict) -> None:
-    """Set environment variables from config if not already set."""
-    # Azure OpenAI settings
-    azure = config.get("model", {}).get("azure", {})
-    if azure.get("endpoint") and "AZURE_OPENAI_ENDPOINT" not in os.environ:
-        os.environ["AZURE_OPENAI_ENDPOINT"] = azure["endpoint"]
-    if azure.get("deployment_name") and "AZURE_OPENAI_DEPLOYMENT_NAME" not in os.environ:
-        os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = azure["deployment_name"]
-    if azure.get("api_version") and "AZURE_OPENAI_API_VERSION" not in os.environ:
-        os.environ["AZURE_OPENAI_API_VERSION"] = azure["api_version"]
-    if azure.get("api_key") and "AZURE_OPENAI_API_KEY" not in os.environ:
-        os.environ["AZURE_OPENAI_API_KEY"] = azure["api_key"]
-    
-    # Hugging Face token
-    hf = config.get("model", {}).get("huggingface", {})
-    if hf.get("token") and "HUGGINGFACE_TOKEN" not in os.environ:
-        os.environ["HUGGINGFACE_TOKEN"] = hf["token"]
-
-
-class ConfigArgs:
-    """Convert TOML config to argparse-like namespace for compatibility with run_workflow.py."""
-    
-    def __init__(self, config: dict):
-        model = config.get("model", {})
-        benchmark = config.get("benchmark", {})
-        paths = config.get("paths", {})
-        
-        # Model settings
-        self.llm_agent_type = model.get("agent_type", "GPT-4o")
-        self.prompt_type = model.get("prompt_type", "base")
-        self.num_gpus = model.get("num_gpus", 1)
-        
-        # Benchmark settings
-        self.num_queries = benchmark.get("num_queries", 10)
-        self.max_iteration = benchmark.get("max_iteration", 10)
-        self.config_gen = 1 if benchmark.get("regenerate", False) else 0
-        self.agent_test = 1 if benchmark.get("agent_test", False) else 0
-        
-        # Paths - use paths from config, with Docker-friendly defaults
-        self.root_dir = paths.get("output_dir", "results")
-        self.microservice_dir = paths.get("microservice_dir", "/microservices-demo")
-        
-        # Benchmark path - make it relative to root_dir if not absolute
-        bench_path = benchmark.get("benchmark_path", "error_config.json")
-        if os.path.isabs(bench_path):
-            self.benchmark_path = bench_path
-        else:
-            self.benchmark_path = os.path.join(self.root_dir, bench_path)
 
 
 def print_config_summary(config: dict) -> None:
@@ -142,24 +95,17 @@ Examples:
         return
     
     # Setup environment variables BEFORE importing modules that need them
-    setup_environment(config)
-    
-    # Now import the workflow modules (after env vars are set)
-    from run_workflow import run_config_error, run_agent_test
     
     # Convert to args namespace for run_workflow.py compatibility
-    run_args = ConfigArgs(config)
+    run_args = structure(config, K8sConfig)
     
     # Create output directory
-    os.makedirs(run_args.root_dir, exist_ok=True)
+    os.makedirs(run_args.output_dir, exist_ok=True)
     
     # Run the benchmark
     print("Starting K8s benchmark evaluation...\n")
     
-    if run_args.agent_test == 1:
-        asyncio.run(run_agent_test(run_args))
-    else:
-        asyncio.run(run_config_error(run_args))
+    asyncio.run(run_evaluation(run_args))
     
     print("\nBenchmark evaluation complete!")
 

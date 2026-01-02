@@ -12,13 +12,16 @@ Usage:
 import argparse
 import os
 import sys
+from cattrs import structure
+from loguru import logger
+import asyncio
 
 try:
     import tomllib
 except ImportError:
     import tomli as tomllib
 
-from main import main as run_benchmark
+from main import main as run_benchmark, MaltConfig
 
 
 def load_config(config_path: str) -> dict:
@@ -37,57 +40,6 @@ def load_config(config_path: str) -> dict:
         config = tomllib.load(f)
     
     return config
-
-
-def setup_environment(config: dict) -> None:
-    """Set environment variables from config if not already set."""
-    # Azure OpenAI settings
-    azure = config.get("model", {}).get("azure", {})
-    if azure.get("endpoint") and "AZURE_OPENAI_ENDPOINT" not in os.environ:
-        os.environ["AZURE_OPENAI_ENDPOINT"] = azure["endpoint"]
-    if azure.get("deployment_name") and "AZURE_OPENAI_DEPLOYMENT_NAME" not in os.environ:
-        os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"] = azure["deployment_name"]
-    if azure.get("api_version") and "AZURE_OPENAI_API_VERSION" not in os.environ:
-        os.environ["AZURE_OPENAI_API_VERSION"] = azure["api_version"]
-    if azure.get("api_key") and "AZURE_OPENAI_API_KEY" not in os.environ:
-        os.environ["AZURE_OPENAI_API_KEY"] = azure["api_key"]
-    
-    # Google API key
-    google = config.get("model", {}).get("google", {})
-    if google.get("api_key") and "GOOGLE_API_KEY" not in os.environ:
-        os.environ["GOOGLE_API_KEY"] = google["api_key"]
-    
-    # Hugging Face token
-    hf = config.get("model", {}).get("huggingface", {})
-    if hf.get("token") and "HUGGINGFACE_TOKEN" not in os.environ:
-        os.environ["HUGGINGFACE_TOKEN"] = hf["token"]
-
-
-class ConfigArgs:
-    """Convert TOML config to argparse-like namespace for compatibility with main.py."""
-    
-    def __init__(self, config: dict):
-        model = config.get("model", {})
-        benchmark = config.get("benchmark", {})
-        output = config.get("output", {})
-        
-        # Model settings
-        self.llm_agent_type = model.get("agent_type", "AzureGPT4Agent")
-        self.prompt_type = model.get("prompt_type", "base")
-        self.model_path = model.get("model_path") or None
-        
-        # Benchmark settings
-        self.num_queries = benchmark.get("num_queries", 10)
-        self.complexity_level = benchmark.get("complexity_levels", ["level1", "level2"])
-        self.dynamic_benchmark_path = benchmark.get("benchmark_path", "data/benchmark_malt.jsonl")
-        self.regenerate_query = benchmark.get("regenerate_queries", False)
-        self.start_index = benchmark.get("start_index", 0)
-        end_idx = benchmark.get("end_index", 0)
-        self.end_index = None if end_idx == 0 else end_idx
-        
-        # Output settings
-        self.output_dir = output.get("output_dir", "logs/llm_agents")
-        self.output_file = output.get("output_file", "results.jsonl")
 
 
 def print_config_summary(config: dict) -> None:
@@ -141,15 +93,12 @@ Examples:
         print("Configuration loaded successfully. Use without --show-config to run.")
         return
     
-    # Setup environment variables
-    setup_environment(config)
-    
     # Convert to args namespace for main.py compatibility
-    run_args = ConfigArgs(config)
+    run_args = structure(config, MaltConfig)
     
     # Run the benchmark
     print("Starting MALT benchmark evaluation...\n")
-    run_benchmark(run_args)
+    asyncio.run(run_benchmark(run_args))
     
     print("\n" + "=" * 60)
     print("Benchmark evaluation complete!")
