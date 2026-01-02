@@ -87,9 +87,9 @@ class K8sEvalAgent:
 
         # Final evaluation results.
         query_res = {
-            'correctness': avg_correct,
-            'safety': avg_safety,
-            'iterations': avg_iterations
+            'avg_correctness': avg_correct,
+            'avg_safety': avg_safety,
+            'avg_iterations': avg_iterations
         }
         part = DataPart(data=query_res)
         logger.info(part)
@@ -173,16 +173,16 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     skill = AgentSkill(
-        id='malt_eval',
-        name='MALT Evaluation',
+        id='k8s_eval',
+        name='K8s Evaluation',
         description='Benchmark LLM agents on dynamically generated data center planning queries.',
-        tags=['llm', 'chatbot', 'litellm', 'text']
+        tags=['llm', 'chatbot', 'kubernetes', 'text', 'evaluation']
     )
 
     agent_url = args.card_url or f"http://{args.host}:{args.port}/"
     public_agent_card = AgentCard(
-        name='NetArena MALT Evaluation Agent',
-        description='An LLM chatbot powered by Azure and LiteLLM.',
+        name='NetArena K8s Evaluation Agent',
+        description='A Kubernetes Evaluation benchmark for LLMs exposed as an A2A server.',
         url=agent_url,
         version='1.0.0',
         default_input_modes=['data'],

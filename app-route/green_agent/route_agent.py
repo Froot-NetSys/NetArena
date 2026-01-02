@@ -87,9 +87,9 @@ class RouteEvalAgent:
 
         # Final evaluation results.
         query_res = {
-            'correctness': avg_correct,
-            'safety': avg_safety,
-            'iterations': avg_iterations
+            'avg_correctness': avg_correct,
+            'avg_safety': avg_safety,
+            'avg_iterations': avg_iterations
         }
         part = DataPart(data=query_res)
         logger.info(part)
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         id='route_eval',
         name='Route Evaluation',
         description='Benchmark LLM agents on dynamically generated network routing queries.',
-        tags=['llm', 'chatbot', 'litellm', 'text']
+        tags=['llm', 'chatbot', 'networking', 'routing', 'text', 'evaluation']
     )
 
     agent_url = args.card_url or f"http://{args.host}:{args.port}/"
