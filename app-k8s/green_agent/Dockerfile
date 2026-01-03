@@ -18,6 +18,12 @@ ENV PATH="/root/.local/bin/:$PATH"
 
 RUN uv sync --no-editable
 
+# Kubenertes CLI.
+RUN apt-get install -y curl ca-certificates gnupg2
+RUN curl -LO "https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl"
+RUN chmod +x ./kubectl
+RUN mv ./kubectl /usr/local/bin/kubectl
+
 WORKDIR /NetPress/app-k8s/green_agent
 
 ENTRYPOINT ["uv", "run", "k8s_agent.py"]
