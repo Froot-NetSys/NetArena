@@ -31,7 +31,7 @@ from a2a.server.events import EventQueue
 from a2a.utils import new_agent_text_message, new_task
 from a2a.utils.errors import ServerError
 
-from run_workflow import K8sConfig, run_error_config
+from test_function import AppRouteConfig, evaluate_routing_queries
 from netarena.agent_client import AgentClientConfig, PromptType
 
 
@@ -40,10 +40,10 @@ class EvalRequest(BaseModel):
     config: dict[str, Any]
 
 
-class K8sEvalAgent:
+class RouteEvalAgent:
 
     async def run_eval(self, request: EvalRequest, updater: TaskUpdater) -> None:
-        config: K8sConfig = structure(request.config, K8sConfig)
+        config: AppRouteConfig = structure(request.config, AppRouteConfig)
 
         # Only one agent allowed to be evaluated at a time.
         role, url = next(iter(request.participants.items())) 
@@ -51,7 +51,7 @@ class K8sEvalAgent:
         config.agent_client_configs = [agent_config]
 
         # TODO: Support multiple agent evals at once?
-        query_eval_results = run_error_config(config)
+        query_eval_results = evaluate_routing_queries(config)
 
         # Each agent (name) mapped to a unique artifact containing all its evaluation results.
         artifact_id = None
@@ -109,7 +109,7 @@ class K8sEvalAgent:
             msg = f'Must have exactly one participant.'
             return ok, msg
         try:
-            _ = structure(request.config, K8sConfig)
+            _ = structure(request.config, AppRouteConfig)
         except Exception as e:
             ok = False
             msg = f'App config invalid: {e}'
@@ -118,7 +118,7 @@ class K8sEvalAgent:
 
 class GreenExecutor(AgentExecutor):
 
-    def __init__(self, green_agent: K8sEvalAgent):
+    def __init__(self, green_agent: RouteEvalAgent):
         self.agent = green_agent
 
     async def execute(
@@ -175,16 +175,16 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     skill = AgentSkill(
-        id='k8s_eval',
-        name='K8s Evaluation',
-        description='Benchmark LLM agents on dynamically generated data center planning queries.',
-        tags=['llm', 'chatbot', 'kubernetes', 'text', 'evaluation']
+        id='route_eval',
+        name='Route Evaluation',
+        description='Benchmark LLM agents on dynamically generated network routing queries.',
+        tags=['llm', 'chatbot', 'networking', 'routing', 'text', 'evaluation']
     )
 
     agent_url = args.card_url or f"http://{args.host}:{args.port}/"
     public_agent_card = AgentCard(
-        name='NetArena K8s Evaluation Agent',
-        description='A Kubernetes Evaluation benchmark for LLMs exposed as an A2A server.',
+        name='NetArena Route Evaluation Agent',
+        description='A Network Routing Evaluation benchmark for LLMs exposed as an A2A server.',
         url=agent_url,
         version='1.0.0',
         default_input_modes=['data'],
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     )
 
     request_handler = DefaultRequestHandler(
-        agent_executor=GreenExecutor(K8sEvalAgent()),
+        agent_executor=GreenExecutor(RouteEvalAgent()),
         task_store=InMemoryTaskStore(),
     )
 

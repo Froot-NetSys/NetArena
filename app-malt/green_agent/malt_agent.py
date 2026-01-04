@@ -60,8 +60,8 @@ class MaltEvalAgent:
         avg_latency = 0
         avg_safety = 0
         n = 0
+        append = False
         async for res in query_eval_results:
-            append = True
             n += 1
 
             # TODO: Accessing hardcoded keys.
@@ -72,9 +72,10 @@ class MaltEvalAgent:
             avg_latency += (res["Result-Latency"] - avg_latency) / n
 
             # Can only append once the artifact is already created (set to False to create it first).
-            if artifact_id is None:
+            if artifact_id is not None:
+                append = True
+            else:
                 artifact_id = str(uuid.uuid4())
-                append = False
 
             part = DataPart(data=res)
             logger.info(part)
@@ -87,16 +88,17 @@ class MaltEvalAgent:
 
         # Final evaluation results.
         query_res = {
-            'correctness': avg_correct,
-            'safety': avg_safety,
-            'latency_s': avg_latency
+            'avg_correctness': avg_correct,
+            'avg_safety': avg_safety,
+            'avg_latency_s': avg_latency
         }
         part = DataPart(data=query_res)
         logger.info(part)
         await updater.add_artifact(
             parts=[part],
             artifact_id=artifact_id,
-            append=append
+            append=append,
+            last_chunk=True
         )
 
     def validate_request(self, request: EvalRequest) -> tuple[bool, str]:
@@ -176,13 +178,13 @@ if __name__ == "__main__":
         id='malt_eval',
         name='MALT Evaluation',
         description='Benchmark LLM agents on dynamically generated data center planning queries.',
-        tags=['llm', 'chatbot', 'litellm', 'text']
+        tags=['llm', 'chatbot', 'data center', 'planning', 'text', 'evaluation']
     )
 
     agent_url = args.card_url or f"http://{args.host}:{args.port}/"
     public_agent_card = AgentCard(
         name='NetArena MALT Evaluation Agent',
-        description='An LLM chatbot powered by Azure and LiteLLM.',
+        description='A Data Center Planning Evaluation benchmark for LLMs exposed as an A2A server.',
         url=agent_url,
         version='1.0.0',
         default_input_modes=['data'],
