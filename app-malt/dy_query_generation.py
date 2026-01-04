@@ -6,8 +6,9 @@ import jsonlines
 from loguru import logger
 import json
 import os
-from solid_step_helper import get_node_value_ranges, getGraphData, GRAPH_TOPOLOGY_DIR
 from enum import Enum
+
+from solid_step_helper import get_node_value_ranges, getGraphData, GRAPH_TOPOLOGY_DIR
 
 
 class ComplexityLevel(Enum):
@@ -352,12 +353,12 @@ class QueryGenerator:
     #                 ]
     #             })
     
-    def generate_queries(self, num_each_type=3, complexity_level=['level1', 'level2']):
-        if 'level1' in complexity_level:
+    def generate_queries(self, num_each_type=3, complexity_level=[ComplexityLevel.LEVEL1, ComplexityLevel.LEVEL2]):
+        if ComplexityLevel.LEVEL1 in complexity_level:
             self.create_level_one_dataset(num_each_type)
-        if 'level2' in complexity_level:
+        if ComplexityLevel.LEVEL2 in complexity_level:
             self.create_level_two_dataset(num_each_type)
-        if 'level3' in complexity_level:
+        if ComplexityLevel.LEVEL3 in complexity_level:
             self.create_level_three_dataset(num_each_type)
 
     def save_queries_to_file(self, file_path):

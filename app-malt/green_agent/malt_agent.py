@@ -60,8 +60,8 @@ class MaltEvalAgent:
         avg_latency = 0
         avg_safety = 0
         n = 0
+        append = False
         async for res in query_eval_results:
-            append = True
             n += 1
 
             # TODO: Accessing hardcoded keys.
@@ -72,9 +72,10 @@ class MaltEvalAgent:
             avg_latency += (res["Result-Latency"] - avg_latency) / n
 
             # Can only append once the artifact is already created (set to False to create it first).
-            if artifact_id is None:
+            if artifact_id is not None:
+                append = True
+            else:
                 artifact_id = str(uuid.uuid4())
-                append = False
 
             part = DataPart(data=res)
             logger.info(part)
@@ -96,7 +97,8 @@ class MaltEvalAgent:
         await updater.add_artifact(
             parts=[part],
             artifact_id=artifact_id,
-            append=append
+            append=append,
+            last_chunk=True
         )
 
     def validate_request(self, request: EvalRequest) -> tuple[bool, str]:
