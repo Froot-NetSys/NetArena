@@ -24,6 +24,10 @@ RUN curl -LO "https://dl.k8s.io/release/v1.34.0/bin/linux/amd64/kubectl"
 RUN chmod +x ./kubectl
 RUN mv ./kubectl /usr/local/bin/kubectl
 
+# Fetch Microservices repository to /microservices-demo (outside /NetPress so volume mounts don't hide it)
+RUN apt-get install -y git
+RUN git clone https://github.com/GoogleCloudPlatform/microservices-demo.git /microservices-demo
+
 WORKDIR /NetPress/app-k8s/green_agent
 
 ENTRYPOINT ["uv", "run", "k8s_agent.py"]
