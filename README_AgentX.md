@@ -89,46 +89,21 @@ docker run -itd --network=host --privileged --name green_agent route_agent:lates
 
 ### K8s App
 
-Requires:
-- Access to a Kubernetes cluster (kubeconfig)
-- The `microservices-demo` folder (must be downloaded separately)
-
-**Step 1: Download microservices-demo**
-
-Clone the Google microservices-demo repository:
+Requires access to a Kubernetes cluster.
 
 ```bash
-cd ~/NetPress/app-k8s
-git clone https://github.com/GoogleCloudPlatform/microservices-demo.git
-```
-
-**Step 2: Start the container**
-
-Mount both the kubeconfig and microservices-demo folder:
-
-```bash
-# Remove any existing green_agent container first
 docker rm -f green_agent
 
 docker run -itd --network=host \
-  -v ~/.kube/config:/root/.kube/config \
+  -v <KUBECONFIG_PATH>:/root/.kube/config \
   -e KUBECONFIG=/root/.kube/config \
-  -v ~/NetPress/app-k8s/microservices-demo:/home/lesley/NetPress/app-k8s/microservices-demo \
+  -v <NETPRESS_ROOT>/app-k8s/microservices-demo:/data/microservices-demo \
   --name green_agent k8s_agent:latest --host "0.0.0.0" --port 9999
 ```
 
-**If using a custom kubeconfig path:**
-
-```bash
-# Remove any existing green_agent container first
-docker rm -f green_agent
-
-docker run -itd --network=host \
-  -v /path/to/your/kubeconfig:/root/.kube/config \
-  -e KUBECONFIG=/root/.kube/config \
-  -v /path/to/microservices-demo:/home/lesley/NetPress/app-k8s/microservices-demo \
-  --name green_agent k8s_agent:latest --host "0.0.0.0" --port 9999
-```
+**Replace:**
+- `<KUBECONFIG_PATH>` — Your kubeconfig file (default: `~/.kube/config`, or `app-k8s/config` if included)
+- `<NETPRESS_ROOT>` — Absolute path to NetPress repo (e.g., `/home/user/NetPress`)
 
 **No remote cluster?** Follow the instructions in [`app-k8s/README.md`](./app-k8s/README.md) to create a local cluster using Kubernetes in Docker (KinD).
 

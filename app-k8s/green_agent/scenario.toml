@@ -11,5 +11,5 @@ prompt_type = "zeroshot_base"
 num_queries = 1
 benchmark_path = "test_data.json"
 output_dir = "output"
-microservice_dir = "/home/ericwang/microservices-demo"
+microservice_dir = "/data/microservices-demo"
 max_iterations = 10
