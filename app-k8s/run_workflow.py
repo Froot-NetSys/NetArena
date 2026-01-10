@@ -52,8 +52,11 @@ def deploy_k8s_cluster(microservice_dir: str):
     """
     try:
         # TODO: Namespace support for multiple parallel assessments?
-        logger.info("Tearing down previous deployments...")
-        subprocess.run(["kubectl", "delete", "-f", "./release/kubernetes-manifests.yaml"], cwd=microservice_dir, check=True)
+        try:
+            logger.info("Tearing down previous deployments...")
+            subprocess.run(["kubectl", "delete", "-f", "./release/kubernetes-manifests.yaml"], cwd=microservice_dir, check=True)
+        except subprocess.CalledProcessError:
+            logger.info("No previous deployments found or error during deletion. Continuing with deployment...")
 
         logger.info("Deploying application...")
         subprocess.run(["kubectl", "apply", "-f", "./release/kubernetes-manifests.yaml"], cwd=microservice_dir, check=True)
