@@ -139,7 +139,7 @@ async def find_pod_by_prefix(prefix):
         logger.error(f"Error listing pods: {e}")
     return None
 
-async def wait_for_debug_container(pod_name, container_prefix="debugger-", timeout=5):
+async def wait_for_debug_container(pod_name, container_prefix="debugger-", timeout=60):
     """
     Poll pod information until the debug container (name starts with container_prefix) is in the running state.
     Note: The debug container will appear in the pod's ephemeralContainers.
@@ -169,7 +169,7 @@ async def wait_for_debug_container(pod_name, container_prefix="debugger-", timeo
         await asyncio.sleep(1)
     return None
 
-async def create_debug_container(pod_name_prefix, timeout=3):
+async def create_debug_container(pod_name_prefix, timeout=30):
     """Create a debug container in the specified pod.
     
     Args:

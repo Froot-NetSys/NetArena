@@ -31,7 +31,7 @@ from a2a.server.events import EventQueue
 from a2a.utils import new_agent_text_message, new_task
 from a2a.utils.errors import ServerError
 
-from run_workflow import K8sConfig, run_error_config
+from run_workflow import K8sConfig, run_error_config, deploy_k8s_cluster
 from netarena.agent_client import AgentClientConfig, PromptType
 
 
@@ -51,6 +51,7 @@ class K8sEvalAgent:
         config.agent_client_configs = [agent_config]
 
         # TODO: Support multiple agent evals at once?
+        deploy_k8s_cluster(config.microservice_dir)
         query_eval_results = run_error_config(config)
 
         # Each agent (name) mapped to a unique artifact containing all its evaluation results.
