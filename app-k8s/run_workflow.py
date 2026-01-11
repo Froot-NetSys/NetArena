@@ -60,6 +60,7 @@ def deploy_k8s_cluster(microservice_dir: str):
 
         logger.info("Deploying application...")
         subprocess.run(["kubectl", "apply", "-f", "./release/kubernetes-manifests.yaml"], cwd=microservice_dir, check=True)
+        subprocess.run(["kubectl", "wait", "--for=condition=ready", "deployment", "--all", "--timeout=120s"], cwd=microservice_dir, check=True)
         
         logger.info("Deployment completed successfully.")
     except subprocess.CalledProcessError as e:
