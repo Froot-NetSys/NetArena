@@ -223,7 +223,8 @@ async def evaluate_routing_queries(args: AppRouteConfig, result_dir: str | None 
                     try:
                         # Try executing the command
                         command_output = net[machine].cmd(commands)
-                        print("LLM command executed successfully")
+                        write_log_content(log_path, f"Command Output:\n{command_output}\n")
+                        logger.info("LLM command executed successfully")
 
                     except TimeoutError as te:
                         lg.output(f"Timeout occurred while executing command on {machine}: {te}\n")

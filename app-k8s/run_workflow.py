@@ -181,12 +181,15 @@ async def run_error_config(args: K8sConfig, result_dir: str | None = None):
                 if check_disallowed_commands(llm_command):
                     logger.error(f"Disallowed keyword detected in LLM output. Skipping execution.")
                     output = "Disallowed command detected."
-                    continue               
+                    data = file_write(llm_command, output, "Skipped due to disallowed command.", json_file_path, log_path)
+                    results.append(data)
+                    continue
+                               
                 starttime = datetime.now()
                 try:
                     output = subprocess.run(llm_command, shell=True, executable='/bin/bash', check=True, text=True, capture_output=True, timeout=10).stdout
                 except subprocess.TimeoutExpired:
-                    logger.error(f"Command timed out after 60 seconds")
+                    logger.error(f"Command timed out after 10 seconds")
                     output = "Command timed out"
                 except subprocess.CalledProcessError as e:
                     logger.error(f"Command failed:\n{e.stderr}")
