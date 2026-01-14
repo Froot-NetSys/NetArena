@@ -25,6 +25,7 @@ How the interaction works:
 **Response format:**
 Put the command **directly** between triple backticks.
 You should use `kubectl patch` instead of `kubectl edit networkpolicy`.
+When using `kubectl patch`, use the `--type=json` to avoid overwriting existing rules. Do not rely on implicit merge behavior defaults.
 You should not include bash in the command, and you should not use <namespace> you should use the namespace of the service.
 
 Important notes:
@@ -182,7 +183,6 @@ def check_disallowed_commands(command: str) -> bool:
         "kubectl create",
         "kubectl apply",
         "bash",
-        "sh",
         "<namespace>",
         "sudo"
     ]

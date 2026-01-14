@@ -8,18 +8,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-def file_write(llm_command: str, output: str, mismatch_summary: str, json_file_path: str, txt_file_path: str) -> list[dict[str, str]]:
+def file_write(llm_command: str, output: str, mismatch_summary: str, json_file_path: str, txt_file_path: str) -> dict[str, str]:
     # Append to JSON file
+    obj = {
+        "llm_command": llm_command,
+        "output": output,
+        "mismatch_summary": mismatch_summary
+    }
     with open(json_file_path, 'r+') as json_file:
         try:
             data = json.load(json_file)
         except json.JSONDecodeError:
             data = []
-        data.append({
-            "llm_command": llm_command,
-            "output": output,
-            "mismatch_summary": mismatch_summary
-        })
+        data.append(obj)
         json_file.seek(0)
         json.dump(data, json_file, indent=4)
     
@@ -29,7 +30,7 @@ def file_write(llm_command: str, output: str, mismatch_summary: str, json_file_p
         txt_file.write(f"Output: ```{output}```\n")
         txt_file.write(f"Mismatch Summary: ```{mismatch_summary}```\n")
         txt_file.write("\n")
-    return data
+    return obj
 
 def summary_tests(folder_path):
     basic_errors = ["remove_ingress", "add_ingress", "change_port", "change_protocol", "add_egress"]
