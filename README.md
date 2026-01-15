@@ -19,7 +19,7 @@ NetPress: Dynamically Generated LLM Benchmarks for Network Applications. *arXiv 
 
 # Assessing with Docker
 
-Each benchmark app ships as an A2A agent following the [Agentbeats green agent format](https://agentbeats.dev/). Benchmark apps receive evaluation requests via the A2A protocol describing the A2A agents involved (e.g. endpoints, API keys, etc) and benchmark configuration (query difficulty, number of queries, etc), which initiates a round of evaluation. The following section includes instructions on how to build the container for each application.
+Each benchmark app ships as an A2A agent following the [Agentbeats green agent format](https://agentbeats.dev/). Benchmark apps receive evaluation requests via the A2A protocol describing the A2A agents involved (e.g. endpoints, API keys, etc) and benchmark configuration (query difficulty, number of queries, etc), which initiates a round of evaluation. The following section includes instructions on how to build the container for each application. If you just want to evaluate your agent against our benchmark, see the [NetArena Leaderboard](https://github.com/Froot-NetSys/netarena_leaderboard/tree/main).
 
 ## Prerequisites
 
