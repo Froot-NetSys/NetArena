@@ -19,14 +19,13 @@ NetPress: Dynamically Generated LLM Benchmarks for Network Applications. *arXiv 
 
 # Assessing with Docker
 
-Each benchmark app ships as an A2A agent following the [Agentbeats green agent format](https://agentbeats.dev/). Benchmark apps receive evaluation requests via the A2A protocol describing the A2A agents involved (e.g. endpoints, API keys, etc) and benchmark configuration (query difficulty, number of queries, etc), which initiates a round of evaluation. The following section includes instructions on how to build the container for each application and run a quick test demo.
+Each benchmark app ships as an A2A agent following the [Agentbeats green agent format](https://agentbeats.dev/). Benchmark apps receive evaluation requests via the A2A protocol describing the A2A agents involved (e.g. endpoints, API keys, etc) and benchmark configuration (query difficulty, number of queries, etc), which initiates a round of evaluation. The following section includes instructions on how to build the container for each application.
 
 ## Prerequisites
 
 - Linux-based system (tested on Ubuntu 20.04)
 - At least 4 CPU cores
 - Docker installed and running
-- `uv` package manager installed
 
 ## Quick Start
 
@@ -56,50 +55,26 @@ cd ~/NetPress
 docker build -t litellm_agent:latest -f ./a2a_llm/Dockerfile .
 ```
 
-### 2. Modify the Demo Script
-
-In the `green_agent_demo.sh` file for your app:
-
-1. **Update the LLM credentials** - Replace the API key and endpoint with your own:
-
-   ```bash
-   export AZURE_API_KEY="<YOUR_API_KEY>"
-   export AZURE_API_BASE="<YOUR_API_ENDPOINT>"
-   export AZURE_API_VERSION="<YOUR_API_VERSION>"
-   MODEL_NAME="azure/XXX"
-   ```
-   For details on how to configure environment variables for a certain model provider, see the [LiteLLM documenation](https://docs.litellm.ai/docs/#basic-usage).
-
-2. **Comment out** the lines that launch the green agent locally (we'll run it in a container instead):
-
-   ```bash
-   # uv run ./<APP-NAME>_agent.py &
-   # server_pid2=$!
-   ```
-
-3. **Comment out** the lines that launch the purple agent locally (if you built as a container):
-   ```bash
-    # uv run ./litellm_a2a_server.py \
-    #     --model-name "${MODEL_NAME}" \
-    #     --port 8000 &
-    # server_pid1=$!  # Get the process ID of the last backgrounded command
-   ```
-
-   Launch the purple agent container instead:
-   ```bash
-   docker run -itd --network=host --name purple_agent litellm_agent:latest --host "0.0.0.0" --port 8000
-   ```
-
-### 3. Start the Container
+### 2. Start the Container
 
 See [How to Start the Container for Each App](#how-to-start-the-container-for-each-app) below for app-specific commands.
 
-### 4. Run the Demo
+If you wish to also run the baseline purple agent, the process is similar to the ones above. Just remember to pass in relevant environment variables
 
 ```bash
-cd ~/NetPress/app-<APP-NAME>/green_agent
-./green_agent_demo.sh
+docker run -itd --network=host --env-file "./env.list" --name purple_agent litellm_agent:latest --host "0.0.0.0" --port 8000
 ```
+
+Example `./env.list` file:
+```bash
+AZURE_API_KEY="<YOUR_API_KEY>"
+AZURE_API_BASE="<YOUR_API_ENDPOINT>"
+AZURE_API_VERSION="<YOUR_API_VERSION>"
+MODEL_NAME="azure/XXX"
+```
+
+   For details on how to configure environment variables for a certain model provider, see the [LiteLLM documenation](https://docs.litellm.ai/docs/#basic-usage).
+
 
 ---
 
