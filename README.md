@@ -1,10 +1,10 @@
-# NetPress: Dynamically Generated LLM Benchmarks for Network Applications
+# NetArena: Dynamically Generated LLM Benchmarks for Network Applications
 
 ## Overview
-NetPress is a dynamic benchmark generation framework for evaluating LLM agents in real-world network applications. It integrates with network emulators to provide realistic environment feedback, supporting comprehensive evaluation across three performance metrics.
+NetArena is a dynamic benchmark generation framework for evaluating LLM agents in real-world network applications. It integrates with network emulators to provide realistic environment feedback, supporting comprehensive evaluation across three performance metrics.
 
 ## Paper
-The research behind NetPress is detailed in our paper:  
+The research behind NetArena is detailed in our paper:  
 Zhou, Y., Ruan, J., Wang, E. S., Fouladi, S., Yan, F. Y., Hsieh, K., & Liu, Z. (2025). 
 NetPress: Dynamically Generated LLM Benchmarks for Network Applications. *arXiv preprint arXiv:2506.03231*. [[paper]](https://arxiv.org/abs/2506.03231)
 
@@ -17,96 +17,136 @@ NetPress: Dynamically Generated LLM Benchmarks for Network Applications. *arXiv 
 }
 ```
 
+# Assessing with Docker
+
+Each benchmark app ships as an A2A agent following the [Agentbeats green agent format](https://agentbeats.dev/). Benchmark apps receive evaluation requests via the A2A protocol describing the A2A agents involved (e.g. endpoints, API keys, etc) and benchmark configuration (query difficulty, number of queries, etc), which initiates a round of evaluation. The following section includes instructions on how to build the container for each application.
+
 ## Prerequisites
-- Conda package manager
-- Python environment
 
-## Installation
-
-1. Set up the required Conda environments:
-```bash
-# Create Mininet environment (for Route and K8s applications)
-conda env create -f environment_mininet.yml
-
-# Create AI Gym environment (for MALT application)
-conda env create -f environment_ai_gym.yml
-```
-
-2. Activate the appropriate environment:
-```bash
-# MALT
-conda activate ai_gym_env
-
-# Routing or K8s
-conda activate mininet
-```
-3. Some local models (e.g. `Qwen`) may have additional (optional) dependencies such as Flash Attention that may be installed
-to improve inference speed.
-
-```bash
-conda activate ai_gym_env
-pip install flash-attn==2.7.4.post1
-```
-
-## Running From Docker
-
-A Dockerfile is provided with all dependencies installed/configured. Note that to use GPUs for local models, you will need to install [**NVIDIA Container Toolkit**](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
-```bash
-# Build image.
-cd /path/to/NetPress
-docker build -t netpress:latest .
-
-# Run. Optional --gpus flag to expose NVIDIA GPUs within container.
-docker run -itd --name netpress_test --gpus all netpress:latest
-
-# Enter container.
-docker exec -it netpress_test /bin/bash
-```
-
-For the Kubernetes app, you will have to expose the docker socket, and run the container on the host network so that the app can deploy and interact with the KIND cluster.
-```bash
-# Expose docker socket and run on localhost.
-docker run -itd --name netpress_test --network host --gpus all \
-    -v /var/run/docker.sock:/var/run/docker.sock netpress:latest \
-```
+- Linux-based system (tested on Ubuntu 20.04)
+- At least 4 CPU cores
+- Docker installed and running
 
 ## Quick Start
 
-Execute the following commands to run the benchmark for each application:
+### 1. Build the Container
+
+From the NetPress root directory, build the container for your target app:
+
 ```bash
-cd experiments
-./run_app_malt.sh
-./run_app_route.sh
-./run_app_k8s.sh
+cd ~/NetPress
+
+# For MALT app
+docker build -t malt_agent:latest -f ./app-malt/green_agent/Dockerfile .
+
+# For K8s app
+docker build -t k8s_agent:latest -f ./app-k8s/green_agent/Dockerfile .
+
+# For Route app
+docker build -t route_agent:latest -f ./app-route/green_agent/Dockerfile .
 ```
 
-## Detailed Application Guides
+**(Optional)** For testing purposes, you may also build the baseline purple agent we use in this demo as a Docker container:
 
-For comprehensive testing instructions, please refer to the following guides:
+```bash
+cd ~/NetPress
 
-- [**Capacity Planning (CP) Application Guide**](./app-malt/README.md)
-- [**Routing Application Guide**](./app-route/README.md)
-- [**Kubernetes (K8s) Application Guide**](./app-k8s/README.md)
+# Test purple agent.
+docker build -t litellm_agent:latest -f ./a2a_llm/Dockerfile .
+```
 
-## Results Analysis
+### 2. Start the Container
 
-### Performance Metrics
-Our evaluation framework measures three key dimensions:
-- **Correctness**: Evaluates if the LLM agent produces accurate solution for each network query.
-- **Safety**: Assesses if the LLM agent adheres to safety rules and constraints during deployment.
-- **Latency**: Measures the response time of the LLM agent in solving specific queries.
+See [How to Start the Container for Each App](#how-to-start-the-container-for-each-app) below for app-specific commands.
 
-### Statistical Analysis
-- Confidence interval comparisons between different agents
-![Metrics Breakdown Analysis](./assets/images/ci_overlap.png)
+If you wish to also run the baseline purple agent, the process is similar to the ones above. Just remember to pass in relevant environment variables
 
-- Comprehensive breakdown analysis of performance metrics
-![Metrics Breakdown Analysis](./assets/images/spider.png)
+```bash
+docker run -itd --network=host --env-file "./env.list" --name purple_agent litellm_agent:latest --host "0.0.0.0" --port 8000
+```
 
-## Contributing
-Guide for adding new network applications coming soon.
+Example `./env.list` file:
+```bash
+AZURE_API_KEY="<YOUR_API_KEY>"
+AZURE_API_BASE="<YOUR_API_ENDPOINT>"
+AZURE_API_VERSION="<YOUR_API_VERSION>"
+MODEL_NAME="azure/XXX"
+```
 
-## Contact
-For questions or support, please:
-- Open an issue on GitHub
-- Contact directly at leszhou@umd.edu
+   For details on how to configure environment variables for a certain model provider, see the [LiteLLM documenation](https://docs.litellm.ai/docs/#basic-usage).
+
+
+---
+
+## How to Start the Container for Each App
+
+> **⚠️ Important:** When switching between apps, always remove the existing `green_agent` container first with `docker rm -f green_agent`. All apps share the same container name.
+
+### MALT App
+
+Standard setup - no additional flags required:
+
+```bash
+# Remove any existing green_agent container first
+docker rm -f green_agent
+
+docker run -itd --network=host --name green_agent malt_agent:latest --host "0.0.0.0" --port 9999
+```
+
+### Route App
+
+Requires `--privileged` flag for Mininet to function:
+
+```bash
+# Remove any existing green_agent container first
+docker rm -f green_agent
+
+docker run -itd --network=host --privileged --name green_agent route_agent:latest --host "0.0.0.0" --port 9999
+```
+
+Sometimes, you may also have to include the following flag to mount kernel modules for Open vSwitch:
+
+```bash
+-v /lib/modules:/lib/modules
+```
+
+### K8s App
+
+Requires access to a Kubernetes cluster.
+
+```bash
+docker rm -f green_agent
+
+docker run -itd --network=host \
+  -v <KUBECONFIG_PATH>:/root/.kube/config \
+  -e KUBECONFIG=/root/.kube/config \
+  -v <NETPRESS_ROOT>/app-k8s/microservices-demo:/data/microservices-demo \
+  --name green_agent k8s_agent:latest --host "0.0.0.0" --port 9999
+```
+
+**Replace:**
+- `<KUBECONFIG_PATH>` — Your kubeconfig file (default: `~/.kube/config`, or `app-k8s/config` if included)
+- `<NETPRESS_ROOT>` — Absolute path to NetPress repo (e.g., `/home/user/NetPress`)
+
+**No remote cluster?** Follow the [Kubernetes in Docker (KinD)](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) installation instructions to create a local cluster.
+
+---
+
+## Troubleshooting
+
+### K8s connection refused
+
+If kubectl commands fail with "connection refused":
+
+1. Verify your kubeconfig is mounted correctly
+2. Check the remote cluster is reachable: `nc -zv <CLUSTER-IP> 6443`
+3. Ensure the `KUBECONFIG` env var is set in the container
+
+### Agent not responding
+
+Check if the container is healthy:
+
+```bash
+docker logs --tail 50 green_agent
+curl http://127.0.0.1:9999/.well-known/agent-card.json
+```
