@@ -17,9 +17,39 @@ NetPress: Dynamically Generated LLM Benchmarks for Network Applications. *arXiv 
 }
 ```
 
-# Assessing with Docker
+# 🐳 Assessing with Docker
 
-Each benchmark app ships as an A2A agent following the [Agentbeats green agent format](https://agentbeats.dev/). Benchmark apps receive evaluation requests via the A2A protocol describing the A2A agents involved (e.g. endpoints, API keys, etc) and benchmark configuration (query difficulty, number of queries, etc), which initiates a round of evaluation. The following section includes instructions on how to build the container for each application. If you just want to evaluate your agent against our benchmark, see the [NetArena Leaderboard](https://github.com/Froot-NetSys/netarena_leaderboard/tree/main).
+Each benchmark app ships as an A2A agent following the [Agentbeats green agent format](https://agentbeats.dev/).
+
+---
+
+### 📋 How It Works
+
+1. **Benchmark apps** receive evaluation requests via the A2A protocol
+2. **Requests describe** the A2A agents involved (endpoints, API keys, etc.) and benchmark configuration (query difficulty, number of queries, etc.)
+3. **This initiates** a round of evaluation against your agent
+
+---
+
+### 🟣 Build Your Own Purple Agent
+
+Want to build your own agent? Check out our example prompt-based agents for reference:
+
+| App | Prompt Agent |
+|-----|--------------|
+| MALT | [`app-malt/old_code/prompt_agent.py`](./app-malt/old_code/prompt_agent.py) |
+| Route | [`app-route/old_code/prompt_agent.py`](./app-route/old_code/prompt_agent.py) |
+| K8s | [`app-k8s/old_code/prompt_agent.py`](./app-k8s/old_code/prompt_agent.py) |
+
+---
+
+### 🏆 Submit Your Results
+
+Ready to see how your agent stacks up? Visit the **[NetArena Leaderboard](https://github.com/Froot-NetSys/netarena_leaderboard/tree/main)** for submission instructions and to compare against other agents.
+
+---
+
+The following section includes instructions on how to build the container for each application.
 
 ## Prerequisites
 
