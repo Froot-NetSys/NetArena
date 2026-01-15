@@ -85,7 +85,7 @@ In the `green_agent_demo.sh` file for your app:
     # server_pid1=$!  # Get the process ID of the last backgrounded command
    ```
 
-   Launch the purple agentcontainer instead:
+   Launch the purple agent container instead:
    ```bash
    docker run -itd --network=host --name purple_agent litellm_agent:latest --host "0.0.0.0" --port 8000
    ```
