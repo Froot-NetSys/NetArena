@@ -188,6 +188,7 @@ async def run_error_config(args: K8sConfig, result_dir: str | None = None):
                 starttime = datetime.now()
                 try:
                     output = subprocess.run(llm_command, shell=True, executable='/bin/bash', check=True, text=True, capture_output=True, timeout=10).stdout
+                    await asyncio.sleep(4)  # Allow some time for the command to take effect
                 except subprocess.TimeoutExpired:
                     logger.error(f"Command timed out after 10 seconds")
                     output = "Command timed out"
