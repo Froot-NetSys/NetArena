@@ -4,7 +4,7 @@ cd ../app-k8s
 # Parameter settings
 LLM_AGENT_TYPE="GPT-4o"  # Type of LLM agent
 NUM_QUERIES=1                              # Number of queries to generate
-ROOT_DIR="/home/ubuntu/NetPress_benchmark/app-k8s/results"  # Root directory for output
+ROOT_DIR="/home/ubuntu/NetArena_benchmark/app-k8s/results"  # Root directory for output
 BENCHMARK_PATH="${ROOT_DIR}/error_config.json"  # Path to save the benchmark (config) query data.
 MICROSERVICE_DIR="/home/ubuntu/microservices-demo"  # Directory for microservice demo
 MAX_ITERATION=10                           # Maximum number of iterations for a query

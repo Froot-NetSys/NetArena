@@ -9,18 +9,18 @@ Evaluate LLM agents on debugging Kubernetes network policy misconfigurations. Th
 ### Step 1: Start the Docker Container
 
 ```bash
-cd /path/to/NetPress
+cd /path/to/NetArena
 
 # Start container with required mounts
-sudo docker run -itd --name netpress_k8s \
+sudo docker run -itd --name netarena_k8s \
   --privileged \
   --network host \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(pwd):/NetPress \
-  netpress:latest
+  -v $(pwd):/NetArena \
+  netarena:latest
 
 # Enter the container
-sudo docker exec -it netpress_k8s /bin/bash
+sudo docker exec -it netarena_k8s /bin/bash
 ```
 
 ### Step 2: Create Kubernetes Cluster (Inside Container)
@@ -52,7 +52,7 @@ kubectl get pods -w
 ```bash
 # Setup config (first time only)
 conda activate mininet
-cd /NetPress/app-k8s
+cd /NetArena/app-k8s
 cp config.template.toml config.toml
 nano config.toml  # Add your Azure API key
 
@@ -115,20 +115,20 @@ git clone https://github.com/GoogleCloudPlatform/microservices-demo.git
 
 ### First Time Setup
 ```bash
-# Build the Docker image (from NetPress root)
-cd /path/to/NetPress
-docker build -t netpress:latest .
+# Build the Docker image (from NetArena root)
+cd /path/to/NetArena
+docker build -t netarena:latest .
 
 # Start container
-sudo docker run -itd --name netpress_k8s \
+sudo docker run -itd --name netarena_k8s \
   --privileged \
   --network host \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $(pwd):/NetPress \
-  netpress:latest
+  -v $(pwd):/NetArena \
+  netarena:latest
 
 # Enter container
-sudo docker exec -it netpress_k8s /bin/bash
+sudo docker exec -it netarena_k8s /bin/bash
 ```
 
 ### Inside Container - Full Setup
@@ -146,7 +146,7 @@ skaffold run
 kubectl get pods   # Wait for all "Running"
 
 # 4. Run benchmark
-cd /NetPress/app-k8s
+cd /NetArena/app-k8s
 cp config.template.toml config.toml
 nano config.toml   # Add your API key
 python run.py
@@ -155,13 +155,13 @@ python run.py
 ### Re-running Later
 ```bash
 # If container exists but stopped
-sudo docker start netpress_k8s
-sudo docker exec -it netpress_k8s /bin/bash
+sudo docker start netarena_k8s
+sudo docker exec -it netarena_k8s /bin/bash
 
 # Inside container - cluster should still exist
 conda activate mininet
 kubectl get pods   # Check if pods still running
-cd /NetPress/app-k8s
+cd /NetArena/app-k8s
 python run.py
 ```
 
@@ -171,10 +171,10 @@ python run.py
 kind delete cluster
 
 # Stop container (from host)
-sudo docker stop netpress_k8s
+sudo docker stop netarena_k8s
 
 # Remove container completely
-sudo docker rm netpress_k8s
+sudo docker rm netarena_k8s
 ```
 
 ---

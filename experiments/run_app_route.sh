@@ -4,7 +4,7 @@ cd app-route  # Enter the application directory
 
 # Define common parameters
 NUM_QUERIES=1
-ROOT_DIR="/NetPress/app-route/results"
+ROOT_DIR="/NetArena/app-route/results"
 BENCHMARK_PATH="${ROOT_DIR}/error_config.json"
 MAX_ITERATION=10
 FULL_TEST=1

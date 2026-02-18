@@ -9,17 +9,17 @@ Evaluate LLM agents on network routing configuration tasks. The benchmark uses M
 ### Step 1: Start the Docker Container
 
 ```bash
-cd /path/to/NetPress
+cd /path/to/NetArena
 
 # Start container with privileged mode (required for Mininet)
-sudo docker run -itd --name netpress_route \
+sudo docker run -itd --name netarena_route \
   --privileged \
   --net=host \
-  -v $(pwd):/NetPress \
-  netpress:latest
+  -v $(pwd):/NetArena \
+  netarena:latest
 
 # Enter the container
-sudo docker exec -it netpress_route /bin/bash
+sudo docker exec -it netarena_route /bin/bash
 ```
 
 ### Step 2: Start Open vSwitch (Required for Mininet)
@@ -43,7 +43,7 @@ mn --test pingall
 conda activate mininet
 
 # Setup config (first time only)
-cd /NetPress/app-route
+cd /NetArena/app-route
 cp config.template.toml config.toml
 nano config.toml  # Add your Azure API key
 
@@ -136,19 +136,19 @@ cp config.template.toml config.toml
 
 ### First Time Setup
 ```bash
-# Build the Docker image (from NetPress root)
-cd /path/to/NetPress
-docker build -t netpress:latest .
+# Build the Docker image (from NetArena root)
+cd /path/to/NetArena
+docker build -t netarena:latest .
 
 # Start container with required flags
-sudo docker run -itd --name netpress_route \
+sudo docker run -itd --name netarena_route \
   --privileged \
   --net=host \
-  -v $(pwd):/NetPress \
-  netpress:latest
+  -v $(pwd):/NetArena \
+  netarena:latest
 
 # Enter container
-sudo docker exec -it netpress_route /bin/bash
+sudo docker exec -it netarena_route /bin/bash
 ```
 
 ### Inside Container - Full Setup
@@ -163,7 +163,7 @@ mn --test pingall
 conda activate mininet
 
 # 4. Setup config
-cd /NetPress/app-route
+cd /NetArena/app-route
 cp config.template.toml config.toml
 nano config.toml   # Add your API key
 
@@ -174,23 +174,23 @@ python run.py
 ### Re-running Later
 ```bash
 # If container exists but stopped
-sudo docker start netpress_route
-sudo docker exec -it netpress_route /bin/bash
+sudo docker start netarena_route
+sudo docker exec -it netarena_route /bin/bash
 
 # Inside container
 service openvswitch-switch start
 conda activate mininet
-cd /NetPress/app-route
+cd /NetArena/app-route
 python run.py
 ```
 
 ### Cleanup
 ```bash
 # Stop container (from host)
-sudo docker stop netpress_route
+sudo docker stop netarena_route
 
 # Remove container completely
-sudo docker rm netpress_route
+sudo docker rm netarena_route
 ```
 
 ---

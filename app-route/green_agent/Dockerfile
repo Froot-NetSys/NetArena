@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
 
-WORKDIR /NetPress
+WORKDIR /NetArena
 COPY --chown=user . .
 
 # The installer requires curl (and certificates) to download the release archive
@@ -33,6 +33,6 @@ RUN cd /opt/mininet/util && DEBIAN_FRONTEND=noninteractive ./install.sh -a
 # Install network utilities for Mininet (ping, traceroute, etc.)
 RUN apt-get update && apt-get install -y iputils-ping net-tools iproute2 traceroute
 
-WORKDIR /NetPress/app-route/green_agent
+WORKDIR /NetArena/app-route/green_agent
 
 ENTRYPOINT ["./start_route_agent.sh"]

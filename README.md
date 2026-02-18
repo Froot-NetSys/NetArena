@@ -6,14 +6,16 @@ NetArena is a dynamic benchmark generation framework for evaluating LLM agents i
 ## Paper
 The research behind NetArena is detailed in our paper:  
 Zhou, Y., Ruan, J., Wang, E. S., Fouladi, S., Yan, F. Y., Hsieh, K., & Liu, Z. (2025). 
-NetPress: Dynamically Generated LLM Benchmarks for Network Applications. *arXiv preprint arXiv:2506.03231*. [[paper]](https://arxiv.org/abs/2506.03231)
+NetArena: Dynamically Generated LLM Benchmarks for Network Applications. *arXiv preprint arXiv:2506.03231*. [[paper]](https://arxiv.org/abs/2506.03231)
 
 ```bibtex
-@article{zhou2025netpress,
-  title={NetPress: Dynamically Generated LLM Benchmarks for Network Applications},
-  author={Zhou, Yajie and Ruan, Jiajun and Wang, Eric S and Fouladi, Sadjad and Yan, Francis Y and Hsieh, Kevin and Liu, Zaoxing},
-  journal={arXiv preprint arXiv:2506.03231},
-  year={2025}
+@inproceedings{
+zhou2026netarena,
+title={NetArena: Dynamically Generated {LLM} Benchmarks for Network Applications},
+author={Yajie Zhou and Jiajun Ruan and Eric S. Wang and Sadjad Fouladi and Francis Y. Yan and Kevin Hsieh and Zaoxing Liu},
+booktitle={The Fourteenth International Conference on Learning Representations},
+year={2026},
+url={https://openreview.net/forum?id=BPVPOtzoOz}
 }
 ```
 
@@ -61,10 +63,10 @@ The following section includes instructions on how to build the container for ea
 
 ### 1. Build the Container
 
-From the NetPress root directory, build the container for your target app:
+From the NetArena root directory, build the container for your target app:
 
 ```bash
-cd ~/NetPress
+cd ~/NetArena
 
 # For MALT app
 docker build -t malt_agent:latest -f ./app-malt/green_agent/Dockerfile .
@@ -79,7 +81,7 @@ docker build -t route_agent:latest -f ./app-route/green_agent/Dockerfile .
 **(Optional)** For testing purposes, you may also build the baseline purple agent we use in this demo as a Docker container:
 
 ```bash
-cd ~/NetPress
+cd ~/NetArena
 
 # Test purple agent.
 docker build -t litellm_agent:latest -f ./a2a_llm/Dockerfile .
@@ -150,13 +152,13 @@ docker rm -f green_agent
 docker run -itd --network=host \
   -v <KUBECONFIG_PATH>:/root/.kube/config \
   -e KUBECONFIG=/root/.kube/config \
-  -v <NETPRESS_ROOT>/app-k8s/microservices-demo:/data/microservices-demo \
+  -v <NETARENA_ROOT>/app-k8s/microservices-demo:/data/microservices-demo \
   --name green_agent k8s_agent:latest --host "0.0.0.0" --port 9999
 ```
 
 **Replace:**
 - `<KUBECONFIG_PATH>` — Your kubeconfig file (default: `~/.kube/config`, or `app-k8s/config` if included)
-- `<NETPRESS_ROOT>` — Absolute path to NetPress repo (e.g., `/home/user/NetPress`)
+- `<NETARENA_ROOT>` — Absolute path to NetArena repo (e.g., `/home/user/NetArena`)
 
 **No remote cluster?** Follow the [Kubernetes in Docker (KinD)](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) installation instructions to create a local cluster.
 

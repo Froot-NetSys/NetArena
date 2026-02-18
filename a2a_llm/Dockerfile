@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 
 
-WORKDIR /NetPress
+WORKDIR /NetArena
 COPY --chown=user . .
 
 # The installer requires curl (and certificates) to download the release archive
@@ -18,6 +18,6 @@ ENV PATH="/root/.local/bin/:$PATH"
 
 RUN uv sync --no-editable
 
-WORKDIR /NetPress/a2a_llm
+WORKDIR /NetArena/a2a_llm
 
 ENTRYPOINT ["uv", "run", "litellm_a2a_server.py"]
