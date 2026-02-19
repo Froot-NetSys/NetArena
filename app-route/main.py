@@ -10,7 +10,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Benchmark Configuration")
     parser.add_argument('--llm_agent_type', type=str, default="Qwen/Qwen2.5-72B-Instruct", help='Choose the LLM agent')# choices=["GPT-Agent","Qwen/Qwen2.5-72B-Instruct","ReAct_Agent"]
     parser.add_argument('--num_queries', type=int, default=1, help='Number of queries to generate for each type')
-    parser.add_argument('--root_dir', type=str, default="/home/ubuntu/NetPress_benchmark/app-route/results", 
+    parser.add_argument('--root_dir', type=str, default="/home/ubuntu/NetArena_benchmark/app-route/results", 
                         help='The directory where all output files will be saved. The directory will be created if it does not exist.')
     parser.add_argument('--max_iteration', type=int, default=10, help='Choose maximum trials for a query')
     parser.add_argument('--vllm', type=int, default=1, choices=[0, 1], help='Enable vllm if set to 1')

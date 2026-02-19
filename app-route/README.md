@@ -62,7 +62,7 @@ Before running the benchmarking script, you need to modify the parameters in `ru
 
 ### `ROOT_DIR`:
 - **Description**: The root directory where output logs and results will be stored. This path should point to the location on your machine where the benchmark results will be saved. Ensure that the specified directory exists and is accessible.
-- **Example**: `/home/ubuntu/NetPress_benchmark/app-route/results`
+- **Example**: `/home/ubuntu/NetArena_benchmark/app-route/results`
 
 ### `MAX_ITERATION`:
 - **Description**: The maximum number of iterations to run for each query. This helps control the number of times the agent will execute the query in each benchmark run. 
@@ -74,7 +74,7 @@ Before running the benchmarking script, you need to modify the parameters in `ru
 
 ### `BENCHMARK_PATH`:
 - **Description**: The path where the above config (benchmark) containing the generated queries will be saved (JSON). If `STATIC_GEN=0`, then this parameter indicates where the existing config file can be found.
-- **Example**: `/home/ubuntu/NetPress_benchmark/app-route/results/error_config.json`
+- **Example**: `/home/ubuntu/NetArena_benchmark/app-route/results/error_config.json`
 
 ### `PROMPT_TYPE`:
 - **Description**: Specifies the type of prompt to use when interacting with the LLM. The prompt type affects the nature of the queries sent to the LLM. You can choose between basic and more advanced prompts, depending on your test requirements.

@@ -75,7 +75,7 @@ Below is a list of configurable parameters and the relevant details.
 
 ### `--output_dir`:
 - **Description**: The output directory where output figures, logs, etc will be stored. This path should point to the location on your machine where the benchmark results will be saved. Ensure that the specified directory exists and is accessible.
-- **Example**: `/home/ubuntu/NetPress_benchmark/app-malt/data/results`
+- **Example**: `/home/ubuntu/NetArena_benchmark/app-malt/data/results`
 
 ### `--output_file`:
 - **Description**: The output file name (JSONL) containing the LLM response, and the correctness/safety information versus the ground truth. The output file will be saved under `--output_dir`.
@@ -86,5 +86,5 @@ Below is a list of configurable parameters and the relevant details.
 
 ### `--dynamic_benchmark_path`:
 - **Description**: The path where the above benchmark containing the generated queries will be saved (JSONL). If `--regenerate_query` is not specified, then this parameter indicates where the existing benchmark file can be found.
-- **Example**: `/home/ubuntu/NetPress_benchmark/app-malt/data/malt_bench_100q_level1.jsonl`
+- **Example**: `/home/ubuntu/NetArena_benchmark/app-malt/data/malt_bench_100q_level1.jsonl`
 

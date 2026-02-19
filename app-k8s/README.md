@@ -161,7 +161,7 @@ Before running the benchmarking script, you need to modify the parameters in run
 
 ### `ROOT_DIR`:
 - **Description**: The root directory where output logs and results will be stored. This path should point to the location on your machine where the benchmark results will be saved. Ensure that the specified directory exists and is accessible.
-- **Example**: `/home/ubuntu/NetPress_benchmark/app-k8s/results`
+- **Example**: `/home/ubuntu/NetArena_benchmark/app-k8s/results`
 
 ### `MICROSERVICE_DIR`:
 - **Description**: The path to the microservices demo directory. This directory contains the demo application that will be used in conjunction with the benchmarking framework. Ensure you specify the correct path to the `microservices-demo` on your system.
@@ -177,7 +177,7 @@ Before running the benchmarking script, you need to modify the parameters in run
 
 ### `BENCHMARK_PATH`:
 - **Description**: The path where the above config (benchmark) containing the generated queries will be saved (JSON). If `CONFIG_GEN=0`, then this parameter indicates where the existing config file can be found.
-- **Example**: `/home/ubuntu/NetPress_benchmark/app-k8s/results/error_config.json`
+- **Example**: `/home/ubuntu/NetArena_benchmark/app-k8s/results/error_config.json`
 
 ### `PROMPT_TYPE`:
 - **Description**: Specifies the type of prompt to use when interacting with the LLM. The prompt type affects the nature of the queries sent to the LLM. You can choose between basic and more advanced prompts, depending on your test requirements.

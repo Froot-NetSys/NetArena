@@ -18,11 +18,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Benchmark Configuration")
     parser.add_argument('--llm_agent_type', type=str, default="Qwen/Qwen2.5-72B-Instruct", help='Choose the LLM agent')#choices=["Qwen/Qwen2.5-72B-Instruct", "GPT-4o", "ReAct_Agent"]
     parser.add_argument('--num_queries', type=int, default=1, help='Number of queries to generate for each type')
-    parser.add_argument('--root_dir', type=str, default="/home/ubuntu/NetPress_benchmark/app-k8s/results", help='Directory to save output files.')
+    parser.add_argument('--root_dir', type=str, default="/home/ubuntu/NetArena_benchmark/app-k8s/results", help='Directory to save output files.')
     parser.add_argument('--microservice_dir', type=str, default="/home/ubuntu/microservices-demo", help='Directory to google microservice demo')
     parser.add_argument('--max_iteration', type=int, default=10, help='Choose maximum trials for a query')
     parser.add_argument('--config_gen', type=int, default=1, help='Choose whether to generate new config')
-    parser.add_argument('--benchmark_path', type=str, default="/home/ubuntu/NetPress_benchmark/app-k8s/results/error_config.json",
+    parser.add_argument('--benchmark_path', type=str, default="/home/ubuntu/NetArena_benchmark/app-k8s/results/error_config.json",
                          help='Where to save the generated benchmark (config), or where to find it if config_gen is 0.')
     parser.add_argument('--num_gpus', type=int, default=1, help='Number of GPUs to use for tensor parallelism (VLLM). Only applies to locally run models.')
     parser.add_argument('--prompt_type', type=str, default="base", choices=["few_shot_basic", "base", "cot"], help='Choose the prompt type')

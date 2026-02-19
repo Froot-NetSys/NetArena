@@ -11,7 +11,7 @@ RUN rm /miniconda3/miniconda.sh
 
 ENV PATH="/miniconda3/bin:${PATH}"
 
-WORKDIR /NetPress
+WORKDIR /NetArena
 
 # Build dependencies.
 RUN apt-get install -y build-essential
