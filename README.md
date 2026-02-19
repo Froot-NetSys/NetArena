@@ -1,19 +1,21 @@
-# NetPress: Dynamically Generated LLM Benchmarks for Network Applications
+# NetArena: Dynamically Generated LLM Benchmarks for Network Applications
 
 ## Overview
-NetPress is a dynamic benchmark generation framework for evaluating LLM agents in real-world network applications. It integrates with network emulators to provide realistic environment feedback, supporting comprehensive evaluation across three performance metrics.
+NetArena is a dynamic benchmark generation framework for evaluating LLM agents in real-world network applications. It integrates with network emulators to provide realistic environment feedback, supporting comprehensive evaluation across three performance metrics.
 
 ## Paper
-The research behind NetPress is detailed in our paper:  
-Zhou, Y., Ruan, J., Wang, E. S., Fouladi, S., Yan, F. Y., Hsieh, K., & Liu, Z. (2025). 
-NetPress: Dynamically Generated LLM Benchmarks for Network Applications. *arXiv preprint arXiv:2506.03231*. [[paper]](https://arxiv.org/abs/2506.03231)
+The research behind NetArena is detailed in our paper:  
+Zhou, Y., Ruan, J., Wang, E. S., Fouladi, S., Yan, F. Y., Hsieh, K., & Liu, Z. (2026). 
+NetArena: Dynamically Generated LLM Benchmarks for Network Applications. *ICLR 2026*. [[paper]](https://openreview.net/forum?id=BPVPOtzoOz)
 
 ```bibtex
-@article{zhou2025netpress,
-  title={NetPress: Dynamically Generated LLM Benchmarks for Network Applications},
-  author={Zhou, Yajie and Ruan, Jiajun and Wang, Eric S and Fouladi, Sadjad and Yan, Francis Y and Hsieh, Kevin and Liu, Zaoxing},
-  journal={arXiv preprint arXiv:2506.03231},
-  year={2025}
+@inproceedings{
+zhou2026netarena,
+title={NetArena: Dynamically Generated {LLM} Benchmarks for Network Applications},
+author={Yajie Zhou and Jiajun Ruan and Eric S. Wang and Sadjad Fouladi and Francis Y. Yan and Kevin Hsieh and Zaoxing Liu},
+booktitle={The Fourteenth International Conference on Learning Representations},
+year={2026},
+url={https://openreview.net/forum?id=BPVPOtzoOz}
 }
 ```
 
@@ -53,21 +55,21 @@ pip install flash-attn==2.7.4.post1
 A Dockerfile is provided with all dependencies installed/configured. Note that to use GPUs for local models, you will need to install [**NVIDIA Container Toolkit**](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 ```bash
 # Build image.
-cd /path/to/NetPress
-docker build -t netpress:latest .
+cd /path/to/NetArena
+docker build -t netarena:latest .
 
 # Run. Optional --gpus flag to expose NVIDIA GPUs within container.
-docker run -itd --name netpress_test --gpus all netpress:latest
+docker run -itd --name netarena_test --gpus all netarena:latest
 
 # Enter container.
-docker exec -it netpress_test /bin/bash
+docker exec -it netarena_test /bin/bash
 ```
 
 For the Kubernetes app, you will have to expose the docker socket, and run the container on the host network so that the app can deploy and interact with the KIND cluster.
 ```bash
 # Expose docker socket and run on localhost.
-docker run -itd --name netpress_test --network host --gpus all \
-    -v /var/run/docker.sock:/var/run/docker.sock netpress:latest \
+docker run -itd --name netarena_test --network host --gpus all \
+    -v /var/run/docker.sock:/var/run/docker.sock netarena:latest \
 ```
 
 ## Quick Start
