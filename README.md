@@ -1,16 +1,16 @@
-# NetArena: Dynamically Generated LLM Benchmarks for Network Applications
+# NetArena: Dynamic Benchmarks for AI Agents in Network Automation
 
 ## Overview
 NetArena is a dynamic benchmark generation framework for evaluating LLM agents in real-world network applications. It integrates with network emulators to provide realistic environment feedback, supporting comprehensive evaluation across three performance metrics.
 
 ## Paper
 The research behind NetArena is detailed in our paper:  
-NetArena: Dynamically Generated LLM Benchmarks for Network Applications. *ICLR 2026*. [[paper]](https://openreview.net/forum?id=BPVPOtzoOz)
+NetArena: Dynamic Benchmarks for AI Agents in Network Automation. *ICLR 2026*. [[paper]](https://openreview.net/forum?id=BPVPOtzoOz)
 
 ```bibtex
 @inproceedings{
 zhou2026netarena,
-title={NetArena: Dynamically Generated {LLM} Benchmarks for Network Applications},
+title={NetArena: Dynamic Benchmarks for AI Agents in Network Automation},
 author={Yajie Zhou and Jiajun Ruan and Eric S. Wang and Sadjad Fouladi and Francis Y. Yan and Kevin Hsieh and Zaoxing Liu},
 booktitle={The Fourteenth International Conference on Learning Representations},
 year={2026},
