@@ -383,3 +383,19 @@ def node_attributes_are_equal(node1_attrs, node2_attrs):
             return False
 
     return True
+
+def edge_types_are_equal(edge1_attrs, edge2_attrs):
+    # Edges loaded by getGraphData have 'type' as a string; also accept a list of types
+    def as_list(edge_type):
+        return [edge_type] if isinstance(edge_type, str) else list(edge_type)
+
+    return sorted(as_list(edge1_attrs.get('type', []))) == sorted(as_list(edge2_attrs.get('type', [])))
+
+def check_graph_equal(graph1, graph2):
+    # Compare as directed graphs, so that edge direction and edge type are checked as well as node attributes
+    return nx.is_isomorphic(
+        nx.DiGraph(graph1),
+        nx.DiGraph(graph2),
+        node_match=node_attributes_are_equal,
+        edge_match=edge_types_are_equal
+    )

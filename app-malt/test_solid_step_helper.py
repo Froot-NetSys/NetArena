@@ -1,6 +1,6 @@
 import networkx as nx
 
-from solid_step_helper import solid_step_add_node_to_graph
+from solid_step_helper import check_graph_equal, solid_step_add_node_to_graph
 
 
 def small_graph():
@@ -33,3 +33,26 @@ def test_add_packet_switch_gets_named_port():
     assert ('ju1.a1.m1', 'new_EK_PACKET_SWITCH_7', 'RK_CONTAINS') in edges
     assert ('new_EK_PACKET_SWITCH_7', 'new_EK_PACKET_SWITCH_7.p1', 'RK_CONTAINS') in edges
     assert len(nodes) == 4
+
+
+def test_check_graph_equal_compares_nodes():
+    graph = solid_step_add_node_to_graph(small_graph(), {'name': 'new_EK_PORT_5', 'type': 'EK_PORT'}, 'ju1.a1.m1.s2c1')
+    assert check_graph_equal(graph, graph.copy())
+    assert not check_graph_equal(graph, small_graph())
+
+
+def test_check_graph_equal_checks_edge_direction():
+    reversed_edge = small_graph()
+    reversed_edge.remove_edge('ju1.a1.m1', 'ju1.a1.m1.s2c1')
+    reversed_edge.add_edge('ju1.a1.m1.s2c1', 'ju1.a1.m1', type='RK_CONTAINS')
+    assert not check_graph_equal(small_graph(), reversed_edge)
+
+
+def test_check_graph_equal_checks_edge_type():
+    wrong_type = small_graph()
+    wrong_type.edges['ju1.a1.m1', 'ju1.a1.m1.s2c1']['type'] = 'RK_CONTROLS'
+    assert not check_graph_equal(small_graph(), wrong_type)
+
+    list_type = small_graph()
+    list_type.edges['ju1.a1.m1', 'ju1.a1.m1.s2c1']['type'] = ['RK_CONTAINS']
+    assert check_graph_equal(small_graph(), list_type)
