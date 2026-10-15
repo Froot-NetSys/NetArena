@@ -73,13 +73,16 @@ def solid_step_add_node_to_graph(graph_data, new_node, parent_node_name=None):
     if 'EK_PORT' in new_node['type']:
         new_node['physical_capacity_bps'] = 1000
 
+    # 'type' is a list, the same as for the nodes loaded by getGraphData
+    new_node_type = new_node['type'] if isinstance(new_node['type'], list) else [new_node['type']]
+
     # if new_node['type'] is EK_PACKET_SWITCH, add a EK_PORT node as its child node with a new attribute 'physical_capacity_bps'
-    if new_node['type'] == 'EK_PACKET_SWITCH':
-        new_port_node = {'name': f'{new_node}.p1', 'type': 'EK_PORT'}
+    if 'EK_PACKET_SWITCH' in new_node_type:
+        new_port_node = {'name': f"{new_node['name']}.p1", 'type': ['EK_PORT']}
         new_port_node_id = len(graph_data.nodes) + 2  # Ensure unique ID
         new_port_node['physical_capacity_bps'] = 1000
         # Add the new node to the graph
-        node_attrs = {'name': new_node['name'], 'type': new_node['type']}
+        node_attrs = {'name': new_node['name'], 'type': new_node_type}
         if 'physical_capacity_bps' in new_node:
             node_attrs['physical_capacity_bps'] = new_node['physical_capacity_bps']
         graph_data.add_node(new_node_id, **node_attrs)
@@ -89,7 +92,7 @@ def solid_step_add_node_to_graph(graph_data, new_node, parent_node_name=None):
         graph_data.add_edge(new_node_id, new_port_node_id, type='RK_CONTAINS')
     
     # Add the new node to the graph
-    node_attrs = {'name': new_node['name'], 'type': new_node['type']}
+    node_attrs = {'name': new_node['name'], 'type': new_node_type}
     if 'physical_capacity_bps' in new_node:
         node_attrs['physical_capacity_bps'] = new_node['physical_capacity_bps']
     graph_data.add_node(new_node_id, **node_attrs)
