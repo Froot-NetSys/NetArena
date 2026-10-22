@@ -172,21 +172,3 @@ def get_context_from_file(file_path: str, context_length: int | None = DEFAULT_C
     if context_length:
         content = content[-context_length:]
     return content
-
-
-def check_disallowed_commands(command: str) -> bool:
-    """Check if the command contains any disallowed operations."""
-    disallowed_keywords = [
-        "kubectl exec",
-        "kubectl edit",
-        "kubectl delete",
-        "kubectl create",
-        "kubectl apply",
-        "bash",
-        "<namespace>",
-        "sudo"
-    ]
-    for keyword in disallowed_keywords:
-        if keyword in command:
-            return True
-    return False

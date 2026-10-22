@@ -17,7 +17,8 @@ from correctness_check import correctness_check, create_debug_container, EXPECTE
 from correct_policy import copy_yaml_to_new_folder
 from deploy_policies import deploy_policies, POLICY_NAMES, POD_NAMES
 from netarena.agent_client import AgentClient, AgentClientConfig, PromptType
-from text_utils import create_query_prompt, get_context_from_file, get_context_from_file, extract_command, check_disallowed_commands
+from text_utils import create_query_prompt, get_context_from_file, extract_command
+from command_validation import validate_command
 
 
 MAX_RETRIES = 5
@@ -178,9 +179,9 @@ async def run_error_config(args: K8sConfig, result_dir: str | None = None):
 
                 endtime = datetime.now()
                 logger.info(f"LLM generation time: {endtime - starttime}")
-                if check_disallowed_commands(llm_command):
-                    logger.error(f"Disallowed keyword detected in LLM output. Skipping execution.")
-                    output = "Disallowed command detected."
+                if (rejection := validate_command(llm_command)) is not None:
+                    logger.error(f"Rejected LLM command: {rejection}")
+                    output = f"Disallowed command detected: {rejection}"
                     data = file_write(llm_command, output, "Skipped due to disallowed command.", json_file_path, log_path)
                     results.append(data)
                     continue
