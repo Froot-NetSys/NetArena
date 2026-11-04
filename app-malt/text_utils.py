@@ -19,7 +19,7 @@ Graph Structure:
 
 Important Guidelines:
 - Check relationships based on edge, check name based on node attribute
-- Nodes follow this hierarchy: CHASSIS contains PACKET_SWITCH, JUPITER contains SUPERBLOCK, SUPERBLOCK contains AGG_BLOCK, AGG_BLOCK contains PACKET_SWITCH, PACKET_SWITCH contains PORT
+- Nodes follow this hierarchy: CHASSIS contains PACKET_SWITCH, JUPITER contains SUPERBLOCK, SUPERBLOCK contains AGG_BLOCK, AGG_BLOCK contains PACKET_SWITCH, CONTROL_DOMAIN contains PACKET_SWITCH, PACKET_SWITCH contains PORT
 - Each PORT node has an attribute 'physical_capacity_bps'. For example, a PORT node name is ju1.a1.m1.s2c1.p3
 - A new PORT node gets physical_capacity_bps 1000. A new PACKET_SWITCH node also gets one new PORT node named <switch name>.p1 (for example new_EK_PACKET_SWITCH_7.p1)
 - When calculating capacity of a node, sum the physical_capacity_bps on the PORT of each hierarchy contained in this node
