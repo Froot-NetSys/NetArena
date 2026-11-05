@@ -1,4 +1,5 @@
 import networkx as nx
+import pytest
 
 from solid_step_helper import check_graph_equal, solid_step_add_node_to_graph
 
@@ -35,24 +36,29 @@ def test_add_packet_switch_gets_named_port():
     assert len(nodes) == 4
 
 
-def test_check_graph_equal_compares_nodes():
-    graph = solid_step_add_node_to_graph(small_graph(), {'name': 'new_EK_PORT_5', 'type': 'EK_PORT'}, 'ju1.a1.m1.s2c1')
-    assert check_graph_equal(graph, graph.copy())
-    assert not check_graph_equal(graph, small_graph())
+def add_port(graph):
+    return solid_step_add_node_to_graph(graph, {'name': 'new_EK_PORT_5', 'type': 'EK_PORT'}, 'ju1.a1.m1.s2c1')
 
 
-def test_check_graph_equal_checks_edge_direction():
-    reversed_edge = small_graph()
-    reversed_edge.remove_edge('ju1.a1.m1', 'ju1.a1.m1.s2c1')
-    reversed_edge.add_edge('ju1.a1.m1.s2c1', 'ju1.a1.m1', type='RK_CONTAINS')
-    assert not check_graph_equal(small_graph(), reversed_edge)
+def reverse_edge(graph):
+    graph.remove_edge('ju1.a1.m1', 'ju1.a1.m1.s2c1')
+    graph.add_edge('ju1.a1.m1.s2c1', 'ju1.a1.m1', type='RK_CONTAINS')
+    return graph
 
 
-def test_check_graph_equal_checks_edge_type():
-    wrong_type = small_graph()
-    wrong_type.edges['ju1.a1.m1', 'ju1.a1.m1.s2c1']['type'] = 'RK_CONTROLS'
-    assert not check_graph_equal(small_graph(), wrong_type)
+def set_edge_type(edge_type):
+    def variant(graph):
+        graph.edges['ju1.a1.m1', 'ju1.a1.m1.s2c1']['type'] = edge_type
+        return graph
+    return variant
 
-    list_type = small_graph()
-    list_type.edges['ju1.a1.m1', 'ju1.a1.m1.s2c1']['type'] = ['RK_CONTAINS']
-    assert check_graph_equal(small_graph(), list_type)
+
+@pytest.mark.parametrize('variant, equal', [
+    pytest.param(lambda graph: graph.copy(), True, id='copy'),
+    pytest.param(add_port, False, id='extra-node'),
+    pytest.param(reverse_edge, False, id='reversed-edge'),
+    pytest.param(set_edge_type('RK_CONTROLS'), False, id='wrong-edge-type'),
+    pytest.param(set_edge_type(['RK_CONTAINS']), True, id='list-edge-type'),
+])
+def test_check_graph_equal(variant, equal):
+    assert check_graph_equal(small_graph(), variant(small_graph())) == equal
