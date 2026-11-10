@@ -8,7 +8,7 @@ from prototxt_parser.prototxt import parse
 from collections import Counter
 import os
 from solid_step_helper import getGraphData, clean_up_llm_output_func, check_list_equal, \
-    node_attributes_are_equal, clean_up_output_graph_data, clean_up_updated_graph_data, \
+    check_graph_equal, clean_up_output_graph_data, clean_up_updated_graph_data, \
     solid_step_add_node_to_graph, solid_step_counting_query, solid_step_remove_node_from_graph, \
     solid_step_list_child_nodes, solid_step_update_node_value, solid_step_rank_child_nodes, validate_llm_output
 import networkx as nx
@@ -140,11 +140,7 @@ class BenchmarkEvaluator:
             'text': lambda gt, llm: gt == llm,
             'list': lambda gt, llm: check_list_equal(gt, llm),
             'table': lambda gt, llm: gt == llm,
-            'graph': lambda gt, llm: nx.is_isomorphic(
-                nx.Graph(gt), 
-                nx.Graph(llm), 
-                node_match=node_attributes_are_equal
-            )
+            'graph': lambda gt, llm: check_graph_equal(gt, llm)
         }
 
         # Get the appropriate comparison strategy and execute it
