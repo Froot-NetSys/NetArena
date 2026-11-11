@@ -8,7 +8,7 @@ from prototxt_parser.prototxt import parse
 from collections import Counter
 import os
 from solid_step_helper import getGraphData, clean_up_llm_output_func, check_list_equal, \
-    node_attributes_are_equal, clean_up_output_graph_data, clean_up_updated_graph_data, \
+    check_graph_equal, clean_up_output_graph_data, clean_up_updated_graph_data, \
     solid_step_add_node_to_graph, solid_step_counting_query, solid_step_remove_node_from_graph, \
     solid_step_list_child_nodes, solid_step_update_node_value, solid_step_rank_child_nodes, validate_llm_output
 import networkx as nx
@@ -42,6 +42,13 @@ class BenchmarkEvaluator:
         elif llm_model_type == "ReAct_Agent":
             self.llm_agent = ReAct_Agent(prompt_type='base')
 
+    @staticmethod
+    def exec_namespace(G):
+        """A new namespace for exec/eval: the module globals (the names that the code could use before) and G."""
+        namespace = dict(globals())
+        namespace['G'] = G
+        return namespace
+
     def userQuery(self, current_query, golden_answer):
         # for each prompt in the prompt_list, append it as the value of {'query': prompt}
         print("Query: ", current_query)
@@ -54,8 +61,10 @@ class BenchmarkEvaluator:
         print("LLM answer: ", llm_answer)
 
         try:
-            exec(llm_answer)
-            ret = eval("process_graph(copy.deepcopy(G))")
+            # Run the LLM code in its own namespace, so that it cannot change the names that the ground truth code uses
+            llm_namespace = self.exec_namespace(copy.deepcopy(G))
+            exec(llm_answer, llm_namespace)
+            ret = eval("process_graph(copy.deepcopy(G))", llm_namespace)
         except Exception:
             ret = {'type': "error", 'data': traceback.format_exc()}
         
@@ -92,8 +101,10 @@ class BenchmarkEvaluator:
         goldenAnswerCode = golden_answer
 
         # ground truth answer should already be checked to ensure it can run successfully
-        exec(goldenAnswerCode)
-        ground_truth_ret = eval("ground_truth_process_graph(copy.deepcopy(G))")
+        # Use a new namespace, so that names defined by the LLM code do not change the ground truth
+        gt_namespace = self.exec_namespace(G)
+        exec(goldenAnswerCode, gt_namespace)
+        ground_truth_ret = eval("ground_truth_process_graph(copy.deepcopy(G))", gt_namespace)
         # if the type of ground_truth_ret is string, turn it into a json object
         if isinstance(ground_truth_ret, str):
             ground_truth_ret = json.loads(ground_truth_ret)
@@ -137,11 +148,7 @@ class BenchmarkEvaluator:
             'text': lambda gt, llm: gt == llm,
             'list': lambda gt, llm: check_list_equal(gt, llm),
             'table': lambda gt, llm: gt == llm,
-            'graph': lambda gt, llm: nx.is_isomorphic(
-                nx.Graph(gt), 
-                nx.Graph(llm), 
-                node_match=node_attributes_are_equal
-            )
+            'graph': lambda gt, llm: check_graph_equal(gt, llm)
         }
 
         # Get the appropriate comparison strategy and execute it

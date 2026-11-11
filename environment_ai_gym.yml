@@ -48,6 +48,7 @@ dependencies:
       - backcall==0.2.0
       - backoff==2.2.1
       - bardapi==0.1.38
+      - bashlex==0.18
       - bcrypt==4.2.1
       - beautifulsoup4==4.12.2
       - bitsandbytes==0.45.1

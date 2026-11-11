@@ -5,6 +5,7 @@ import argparse
 from correctness_check import correctness_check, create_debug_container
 from correct_policy import copy_yaml_to_new_folder
 from llm_agent import LLMAgent
+from command_validation import validate_command
 import json
 from datetime import datetime
 from file_util import file_write, summary_tests, plot_metrics, plot_summary_results
@@ -161,20 +162,18 @@ async def run_config_error(args):
             if llm_command is None:
                 print("Error: llm_command is None")
                 continue
-            if "sudo" in llm_command:
-                print("Error: LLM command contains 'sudo'")
+            rejection = validate_command(llm_command)
+            if rejection is not None:
+                print(f"Rejected LLM command: {rejection}")
+                # The next iteration writes this command and output to the context, so the LLM sees why it was rejected
+                output = f"Disallowed command detected: {rejection}"
                 continue
-            if "kubectl apply" in llm_command:
-                print("Error: LLM command contains 'kubectl apply -f'")
-                continue
-            if "kubectl create" in llm_command:
-                print("Error: LLM command contains 'kubectl create -f'")
-                continue                
             starttime = datetime.now()
             try:
                 output = subprocess.run(llm_command, shell=True, executable='/bin/bash', check=True, text=True, capture_output=True, timeout=10).stdout
+                await asyncio.sleep(4)  # Give the patched network policy time to take effect before the connectivity check
             except subprocess.TimeoutExpired:
-                print(f"Command timed out after 60 seconds")
+                print(f"Command timed out after 10 seconds")
                 output = "Command timed out"
             except subprocess.CalledProcessError as e:
                 print(f"Command failed:\n{e.stderr}")
