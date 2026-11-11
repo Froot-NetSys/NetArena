@@ -30,7 +30,10 @@ You should not include bash in the command, and you should not use <namespace> y
 
 Important notes:
 - You are not allowed to see the logs of the pods and Kubernetes events.
-- You are not allowed to use the following commands: `kubectl exec`, `kubectl create`, `kubectl apply`, `kubectl delete`, `kubectl edit`, `kubectl describe`, `bash`, `sudo`.
+- Allowed commands: only `kubectl get` and `kubectl patch networkpolicy`. The harness rejects all other commands. A rejected command uses one of your turns.
+- You can pipe the output of `kubectl get` to these filters only: `grep`, `head`, `tail`, `wc`, `jq`, `cut`, `sort`, `uniq`, `tr`, `cat`.
+- Do not join commands with `;`, `&&`, `||` or `&`. To run more than one command, put each command on its own line.
+- Do not use shell variables, `$(...)`, backticks, loops, heredocs or redirects to files. You can redirect output only to `/dev/null` or with `2>&1`.
 - Your new command should not change the existing correct network policies if not necessary; Please maintain the originally correct connectivity status.
 """
 

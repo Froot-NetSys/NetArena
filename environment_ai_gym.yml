@@ -78,6 +78,7 @@ dependencies:
 
       # === Kubernetes ===
       - kubernetes==32.0.1
+      - bashlex==0.18
 
       # === Image Processing ===
       - pillow==11.1.0
