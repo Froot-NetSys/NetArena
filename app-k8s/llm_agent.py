@@ -36,7 +36,7 @@ def extract_command(text: str) -> str:
     Returns:
         str: The content between the triple backticks with newline characters removed. If no match is found, returns an empty string.
     """
-    match = re.search(r'```(.*?)```', text, re.DOTALL)
+    match = re.search(r'```(?:(?:bash|sh|shell)\n)?(.*?)```', text, re.DOTALL)
     if match:
         return match.group(1).strip()
     return ""
