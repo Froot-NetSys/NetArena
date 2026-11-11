@@ -42,6 +42,13 @@ class BenchmarkEvaluator:
         elif llm_model_type == "ReAct_Agent":
             self.llm_agent = ReAct_Agent(prompt_type='base')
 
+    @staticmethod
+    def exec_namespace(G):
+        """A new namespace for exec/eval: the module globals (the names that the code could use before) and G."""
+        namespace = dict(globals())
+        namespace['G'] = G
+        return namespace
+
     def userQuery(self, current_query, golden_answer):
         # for each prompt in the prompt_list, append it as the value of {'query': prompt}
         print("Query: ", current_query)
@@ -54,8 +61,10 @@ class BenchmarkEvaluator:
         print("LLM answer: ", llm_answer)
 
         try:
-            exec(llm_answer)
-            ret = eval("process_graph(copy.deepcopy(G))")
+            # Run the LLM code in its own namespace, so that it cannot change the names that the ground truth code uses
+            llm_namespace = self.exec_namespace(copy.deepcopy(G))
+            exec(llm_answer, llm_namespace)
+            ret = eval("process_graph(copy.deepcopy(G))", llm_namespace)
         except Exception:
             ret = {'type': "error", 'data': traceback.format_exc()}
         
@@ -92,8 +101,10 @@ class BenchmarkEvaluator:
         goldenAnswerCode = golden_answer
 
         # ground truth answer should already be checked to ensure it can run successfully
-        exec(goldenAnswerCode)
-        ground_truth_ret = eval("ground_truth_process_graph(copy.deepcopy(G))")
+        # Use a new namespace, so that names defined by the LLM code do not change the ground truth
+        gt_namespace = self.exec_namespace(G)
+        exec(goldenAnswerCode, gt_namespace)
+        ground_truth_ret = eval("ground_truth_process_graph(copy.deepcopy(G))", gt_namespace)
         # if the type of ground_truth_ret is string, turn it into a json object
         if isinstance(ground_truth_ret, str):
             ground_truth_ret = json.loads(ground_truth_ret)
