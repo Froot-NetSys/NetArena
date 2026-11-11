@@ -18,6 +18,21 @@ url={https://openreview.net/forum?id=BPVPOtzoOz}
 }
 ```
 
+## Which Branch to Use
+
+| You want to | Use branch |
+|---|---|
+| Assess an A2A agent with the Docker containers (Agentbeats, leaderboard) | `a2a-agentx` (this branch) |
+| Run NetArena without Docker, on your own machine with conda, and call LLMs directly | [`main`](https://github.com/Froot-NetSys/NetArena/tree/main) |
+
+This README covers only the Docker setup. For a local setup without Docker, use the `main` branch:
+
+```bash
+git clone -b main https://github.com/Froot-NetSys/NetArena.git
+```
+
+Then follow the installation steps in the `main` branch [README](https://github.com/Froot-NetSys/NetArena/blob/main/README.md).
+
 # 🐳 Assessing with Docker
 
 Each benchmark app ships as an A2A agent following the [Agentbeats green agent format](https://agentbeats.dev/).
